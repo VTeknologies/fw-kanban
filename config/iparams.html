@@ -1,0 +1,147 @@
+<html>
+  <head>
+    <title>Kanban</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static.freshdev.io/fdk/2.0/assets/freshdesk.css"
+    />
+    <link rel="stylesheet" type="text/css" href="./assets/iparams.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/css/crayons-min.css"
+    />
+
+    <style>
+      /* Put your custom style here */
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div
+        class="admin-api-container fw-card-1"
+        id="admin-api-container"
+        style="margin-top: 7rem"
+      >
+        <form class="fw-flex fw-flex-column fw-gap-2 fw-ml-4 fw-mr-4">
+          <fw-input
+            label="Domain"
+            name="domain"
+            icon-left="link"
+            hint-text="Please enter your Freshdesk domain"
+            placeholder="Enter your Freshdesk domain"
+            required
+            clear-input
+            data-bind="product.domain"
+          ></fw-input>
+          <fw-input
+            label="API Key"
+            name="api_key"
+            icon-left="password"
+            hint-text="Please enter your Freshdesk API Key"
+            placeholder="Enter your Freshdesk API Key"
+            required
+            clear-input
+            type="text"
+            data-bind="product.api_key"
+          ></fw-input>
+          <fw-button id="validate-btn">Validate Freshdesk Account</fw-button>
+        </form>
+      </div>
+      <div
+        class="agent-api-container fw-card-1 fw-pb-24"
+        id="agent-api-container"
+        style="display: none; margin-top: 7rem"
+      >
+        <div class="fw-pb-24">
+          <span
+            ><h3 class="fw-color-elephant-900">
+              Configure Ticket Fields
+            </h3></span
+          >
+          <span
+            ><p class="fw-color-smoke-300">
+              This setup helps to load the tickets on model view
+            </p></span
+          >
+          <div>
+            <fw-select
+              multiple
+              placeholder="Please select the ticket fields"
+              id="ticket-fields"
+            ></fw-select>
+          </div>
+        </div>
+        <div id="wrapper" class="fw-flex fw-flex-column fw-gap-2">
+          <div id="heading-text">
+            <span
+              ><h3 class="fw-color-elephant-900">
+                Configure API key for agents
+              </h3></span
+            >
+            <span
+              ><p class="fw-color-smoke-300">
+                This setup helps to load the tickets based on Agent's scope
+              </p></span
+            >
+            <div style="text-align: center">
+              <fw-spinner id="spinner" size="medium"></fw-spinner>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="{{{appclient}}}"></script>
+    <script src="./assets/iparams.js"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/dist/crayons/crayons.esm.js"
+    ></script>
+    <script
+      nomodule
+      src="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/dist/crayons/crayons.js"
+    ></script>
+
+    <script type="text/javascript">
+      async function getConfigs(configs) {
+        //write your code here
+        console.log(configs);
+
+        const { domain, api_key, credentials, agent_ids, ticket_fields } =
+          configs;
+        document.getElementsByName("domain")[0].value = domain;
+        document.getElementsByName("api_key")[0].value = api_key;
+        iparams = configs;
+        $("#agent-api-container").show();
+        $("#admin-api-container").hide();
+
+        await getAgents(domain, api_key);
+        await getTicketFields(ticket_fields);
+        agent_ids.forEach((id) => {
+          createDDLForAgents(id);
+        });
+        window.isValid = true;
+        $("#spinner").hide();
+      }
+
+      function validate() {
+        //write your code here
+        return window.isValid;
+      }
+
+      function postConfigs() {
+        //write your code here
+        console.log(iparams);
+
+        return {
+          _meta: {
+            secure: ["api_key", "crendentials"],
+          },
+          ...iparams,
+        };
+      }
+    </script>
+  </body>
+</html>

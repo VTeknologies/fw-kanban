@@ -1,0 +1,616 @@
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/theme-chalk/index.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static.freshdev.io/fdk/2.0/assets/freshdesk.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+      integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
+      crossorigin="anonymous"
+    />
+    <style>
+      .el-select {
+        display: block;
+      }
+
+      #modalId {
+        height: 100vh;
+        overflow-y: auto;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0px;
+        width: 100%;
+        right: 18px;
+      }
+
+      .cancel-btn {
+        margin-right: 10px;
+      }
+
+      .list-group-item {
+        cursor: pointer;
+        display: inline-block;
+        margin: 3px 5px !important;
+        width: 30%;
+        border-radius: 0 !important;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding: 10px 5px;
+      }
+
+      .dragArea {
+        min-height: 100px;
+        background-color: #c0c0c030;
+        padding: 5px;
+        height: 25vh;
+        overflow: hidden;
+        overflow-y: auto;
+      }
+
+      .dragArea-selected {
+        min-height: 100px;
+        background-color: #c0c0c030;
+        padding: 5px;
+        height: calc(39vh - 32px);
+        overflow: hidden;
+        overflow-y: auto;
+        margin-bottom: 0px;
+      }
+
+      .element {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding: 10px 5px;
+        width: 140px;
+      }
+
+      .close-btn {
+        float: right;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .dragIcon {
+        display: inline-block;
+        width: 16px;
+        height: 8px;
+        transform: rotate(90deg);
+      }
+
+      .selected-item {
+        padding: 0;
+        width: 97%;
+      }
+
+      .selected-drag-icon,
+      .selected-icon,
+      .element {
+        display: block;
+        float: left;
+      }
+
+      .selected-drag-icon {
+        margin-top: 15px;
+        margin-left: 4px;
+      }
+
+      .selected-icon {
+        padding: 11px 9px;
+        border-left: 1px solid #ddd;
+      }
+
+      .selected-icon:hover {
+        background: #ddd;
+        border-right: 1px solid #ddd;
+      }
+
+      .dragIcon,
+      .dragIcon::before {
+        background-image: radial-gradient(#c0c0c0 40%, transparent 40%);
+        background-size: 4px 4px;
+        background-position: 0 100%;
+        background-repeat: repeat-x;
+        cursor: move;
+      }
+
+      .dragIcon::before {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 33%;
+      }
+
+      .empty-text:empty {
+        text-align: center;
+        vertical-align: middle;
+        user-select: none;
+        color: #808080 !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .empty-text:empty::before {
+        color: #808080 !important;
+        font-weight: 100 !important;
+      }
+
+      .empty-text[data-placeholder]:not([data-placeholder=""]):empty::before {
+        content: attr(data-placeholder);
+        line-height: 85px;
+      }
+
+      .link {
+        font-size: 9px;
+        text-transform: capitalize;
+        padding: 0;
+        color: #448ee1;
+      }
+
+      .link:hover {
+        text-decoration: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="modalId">
+      <div class="container-fluid" ref="container">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="form-group">
+              <label for="ticketFields">List of Ticket Fields</label>
+              <el-select
+                id="ticketFields"
+                v-model="selectedChoiceId"
+                placeholder="Select"
+                @change="_handleChange"
+              >
+                <el-option
+                  v-for="item in dpValues"
+                  :key="item.id"
+                  :label="item.label_for_customers"
+                  :value="item.id"
+                >
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+          <div class="col-md-12" :class="{'hide': isHidden }">
+            <div class="row">
+              <div class="col-md-12" style="width: 100%">
+                <h5>Available Fields</h5>
+                <draggable
+                  class="dragArea list-group"
+                  :list="choices"
+                  :group="{ name: 'SelectedChoice', pull: true }"
+                  :clone="clone"
+                  :move="checkMove"
+                >
+                  <div
+                    class="list-group-item"
+                    v-for="element in choices"
+                    :id="element.value"
+                    :key="element.value"
+                    :title="element.key"
+                  >
+                    <span class="dragIcon"></span>
+                    <span>{{ element.key }}</span>
+                  </div>
+                </draggable>
+              </div>
+              <div style="display: flex">
+                <div class="col-md-12" style="width: 50%">
+                  <h5>
+                    Visible Fields <span style="color: red">*</span>
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      content="Fields display in kanban board (Max 25)"
+                      placement="bottom"
+                    >
+                      <i
+                        class="fa fa-info-circle"
+                        style="color: #a0a0a0"
+                        aria-hidden="true"
+                      ></i>
+                    </el-tooltip>
+                    <span
+                      class="btn btn-link link"
+                      title="Clear"
+                      @click="_handleClearSelectedFields"
+                    >
+                      (Clear)
+                    </span>
+                    <span style="font-size: 10px">
+                      Count: {{ selectedChoice.length }}
+                    </span>
+                  </h5>
+                  <draggable
+                    id="visibleFields"
+                    class="dragArea-selected list-group empty-text"
+                    :list="selectedChoice"
+                    :group="{name:'SelectedChoice'}"
+                    data-placeholder="Drag and Drop from available
+                  fields."
+                    :move="checkMove"
+                  >
+                    <div
+                      class="list-group-item selected-item"
+                      v-for="(element,index) in selectedChoice"
+                      :key="element.key"
+                      :title="element.key"
+                    >
+                      <div class="dragIcon selected-drag-icon"></div>
+                      <div class="element">{{ element.key }}</div>
+                      <div
+                        class="selected-icon pull-right"
+                        @click="removeAt(index)"
+                      >
+                        <i class="el-icon-close close-btn"></i>
+                      </div>
+                    </div>
+                  </draggable>
+                </div>
+                <div class="col-md-12" style="width: 50%">
+                  <h5>
+                    Invisible Fields
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      content="Fields Invisible to take some action (Max 2)"
+                      placement="bottom"
+                    >
+                      <i
+                        class="fa fa-info-circle"
+                        style="color: #a0a0a0"
+                        aria-hidden="true"
+                      ></i>
+                    </el-tooltip>
+                    <span
+                      class="btn btn-link link"
+                      title="Clear"
+                      @click="_handleClearHiddenFields"
+                    >
+                      (Clear)
+                    </span>
+                  </h5>
+                  <draggable
+                    id="invisibleFields"
+                    class="dragArea-selected list-group empty-text"
+                    :list="hiddenChoice"
+                    :group="{name:'SelectedChoice'}"
+                    data-placeholder="Drag and Drop from available
+                  fields."
+                    :move="checkMove"
+                  >
+                    <div
+                      class="list-group-item selected-item"
+                      v-for="(element,index) in hiddenChoice"
+                      :key="element.key"
+                      :title="element.key"
+                    >
+                      <div class="dragIcon selected-drag-icon"></div>
+                      <div class="element">{{ element.key }}</div>
+                      <div
+                        class="selected-icon pull-right"
+                        @click="removeHiddenAt(index)"
+                      >
+                        <i class="el-icon-close close-btn"></i>
+                      </div>
+                    </div>
+                  </draggable>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn btn-primary pull-right" @click="_handleSave">
+          Save
+        </button>
+        <button
+          class="btn btn-default pull-right cancel-btn"
+          @click="_handleCancel"
+        >
+          Cancel
+        </button>
+      </footer>
+    </div>
+    <script async src="{{{appclient}}}"></script>
+    <!-- <script src="https://static.freshdev.io/fdk/2.0/assets/fresh_client.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+    <script>
+      (function () {
+        new Vue({
+          el: "#modalId",
+          data: {
+            fdObject: null,
+            loading: null,
+            selectedChoiceId: null,
+            dpValues: [],
+            selectedChoice: [],
+            hiddenChoice: [],
+            selectedTicketField: "",
+            choices: [],
+            loggedInUser: null,
+            isHidden: true,
+            choiceLimit: 25,
+            hiddenLimit: 2,
+          },
+
+          methods: {
+            initFD() {
+              return app
+                .initialized()
+                .then((client) => {
+                  this.fdObject = client;
+                  this.getParamsFrmParent();
+                })
+                .catch((error) => {
+                  console.log(error);
+                  this.showNotify(error, "error");
+                });
+            },
+
+            getParamsFrmParent() {
+              this.fdObject.instance.context().then((context) => {
+                if (context.data) {
+                  this.loggedInUser = context.data.loggedInUser || 0;
+                  this.getFieldValues();
+                } else {
+                  this.fdObject.instance.close();
+                }
+              });
+            },
+
+            showNotify(message, type) {
+              this.$notify({
+                title: message.status || type,
+                message: message.message,
+                type: type,
+              });
+            },
+
+            showLoading() {
+              if (this.loading == null || !this.loading.visible) {
+                this.loading = this.$loading({
+                  lock: true,
+                  target: this.$refs.container,
+                });
+              }
+            },
+
+            closeLoading() {
+              if (this.loading !== null) {
+                this.loading.close();
+              }
+            },
+
+            getFieldValues() {
+              this.showLoading();
+              this.fdObject.request
+                .invokeTemplate("getTicketFields", {
+                  context: { agentId: this.loggedInUser },
+                })
+                .then((data) => {
+                  if (data.status == 200) {
+                    let response = JSON.parse(data.response);
+                    this.dpValues = response.filter((value) => {
+                      return (
+                        value.type !== "nested_field" &&
+                        value.type !== "default_source" &&
+                        value.type !== "default_product" &&
+                        !!value.choices
+                      );
+                    });
+                    this.getData()
+                      .then((data) => {
+                        this.selectedTicketField = data.selectedTicketField;
+                        this.selectedChoiceId = data.selectedChoiceId;
+                        this._handleChange();
+                        this.selectedChoice = data.selectedChoice || [];
+                        this.hiddenChoice = data.hiddenChoice || [];
+                        this.choices = this.choices.filter((x) => {
+                          return (
+                            !this.selectedChoice.some(
+                              (t) => t.value == x.value
+                            ) &&
+                            !this.hiddenChoice.some((r) => r.value == x.value)
+                          );
+                        });
+                        this.closeLoading();
+                      })
+                      .catch((err) => {
+                        this.closeLoading();
+                      });
+                  } else {
+                    throw data;
+                  }
+                })
+                .catch((error) => {
+                  console.log(error);
+                  this.showNotify(error, "error");
+                });
+            },
+
+            _handleChange() {
+              let selected = this.dpValues.filter((value) => {
+                return value.id === this.selectedChoiceId;
+              });
+              if (selected.length > 0) {
+                let keyValue = [];
+                let selectedChoice = selected[0].choices;
+                for (let key in selectedChoice) {
+                  if (selected[0].type == "default_status") {
+                    keyValue.push({
+                      key: selectedChoice[key][0],
+                      value: key,
+                    });
+                  } else if (Array.isArray(selected[0].choices)) {
+                    keyValue.push({
+                      key: selectedChoice[key],
+                      value: selectedChoice[key],
+                    });
+                  } else {
+                    keyValue.push({
+                      key: key,
+                      value: selectedChoice[key],
+                    });
+                  }
+                }
+                if (
+                  selected[0].type !== "default_status" &&
+                  selected[0].type !== "default_priority"
+                ) {
+                  keyValue.unshift({ key: "UnAssigned", value: "Unassigned" });
+                }
+                this.selectedTicketField = this.getTicketFieldFromType(
+                  selected[0].type,
+                  selected[0].name
+                );
+                this.choices = keyValue;
+                this.selectedChoice = [];
+                this.hiddenChoice = [];
+                this.isHidden = false;
+              }
+            },
+
+            getTicketFieldFromType(type, name) {
+              let ticketField = "";
+              switch (type) {
+                case "custom_dropdown":
+                  ticketField = name;
+                  break;
+                case "default_ticket_type":
+                  ticketField = "type";
+                  break;
+                case "default_status":
+                  ticketField = "status";
+                  break;
+                case "default_priority":
+                  ticketField = "priority";
+                  break;
+                case "default_group":
+                  ticketField = "group_id";
+                  break;
+                case "default_agent":
+                  ticketField = "responder_id";
+                  break;
+              }
+              return ticketField;
+            },
+
+            _handleSave() {
+              if (this.loggedInUser) {
+                if (this.selectedChoice.length > 0) {
+                  this.setData();
+                } else {
+                  this.showNotify(
+                    { message: "Please select any of the available fields" },
+                    "error"
+                  );
+                }
+              }
+            },
+
+            _handleCancel() {
+              this.fdObject.instance.close();
+            },
+
+            _handleClearSelectedFields() {
+              this.choices = [...this.choices, ...this.selectedChoice];
+              this.selectedChoice = [];
+            },
+
+            _handleClearHiddenFields() {
+              this.choices = [...this.choices, ...this.hiddenChoice];
+              this.hiddenChoice = [];
+            },
+
+            setData() {
+              this.fdObject.db
+                .set(`ticket-fields-${this.loggedInUser}`, {
+                  selectedChoice: this.selectedChoice,
+                  hiddenChoice: this.hiddenChoice || [],
+                  selectedTicketField: this.selectedTicketField,
+                  selectedChoiceId: this.selectedChoiceId,
+                })
+                .then(
+                  (data) => {
+                    this.showNotify(
+                      { message: "Saved successfully" },
+                      "success"
+                    );
+                    this.fdObject.instance.send({
+                      message: {
+                        fromModel: false,
+                      },
+                    });
+                    this.fdObject.instance.close();
+                  },
+                  (error) => {
+                    console.log(error);
+                    this.showNotify(error, "error");
+                  }
+                );
+            },
+
+            getData() {
+              return this.fdObject.db.get(`ticket-fields-${this.loggedInUser}`);
+            },
+
+            removeAt(index) {
+              this.choices.unshift(this.selectedChoice[index]);
+              this.selectedChoice.splice(index, 1);
+            },
+
+            removeHiddenAt(index) {
+              this.choices.unshift(this.hiddenChoice[index]);
+              this.hiddenChoice.splice(index, 1);
+            },
+
+            clone({ key, value }) {
+              return { key, value: value.toString() };
+            },
+
+            checkMove(evt) {
+              if (evt.to.id === "visibleFields") {
+                if (this.selectedChoice.length > this.choiceLimit - 1) {
+                  return false;
+                }
+              } else if (evt.to.id === "invisibleFields") {
+                if (this.hiddenChoice.length > this.hiddenLimit - 1) {
+                  return false;
+                }
+              }
+            },
+          },
+
+          created() {
+            this.initFD();
+          },
+        });
+      })();
+    </script>
+  </body>
+</html>

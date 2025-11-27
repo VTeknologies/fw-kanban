@@ -1,0 +1,357 @@
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/theme-chalk/index.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static.freshdev.io/fdk/2.0/assets/freshdesk.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+      integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+
+  <body>
+    <div class="fw-widget-wrapper">
+      <div id="kabanaId">
+        <div
+          v-if="hasAccess"
+          class="container-fluid hide"
+          ref="kanbanContainder"
+        >
+          <div class="row">
+            <div class="col-md-12">
+              <h4>
+                Tickets
+                <button
+                  class="btn"
+                  :class="{'btn-primary': !onlyMyIssues, 'btn-default': onlyMyIssues}"
+                  @click="handleAllTickets"
+                >
+                  All
+                </button>
+                <button
+                  class="btn"
+                  :class="{'btn-primary': onlyMyIssues, 'btn-default': !onlyMyIssues}"
+                  @click="handleOnlyMyTickets"
+                >
+                  Only My Tickets
+                </button>
+                <button
+                  class="btn"
+                  :class="{'btn-primary': recentlyUpdated, 'btn-default': !recentlyUpdated}"
+                  @click="handleRecentlyUpdated"
+                >
+                  Recently Updated
+                </button>
+                <el-popover placement="bottom" width="300" trigger="click">
+                  <div class="el-popover__title">
+                    Filters
+                    <button
+                      class="btn btn-link pull-right"
+                      style="font-size: 9px; padding: 7px"
+                      title="Clear Filters"
+                      @click="_handleRemoveFilters"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div class="popover-filter">
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div
+                          v-for="x in dropdownFields"
+                          :key="x.id"
+                          class="form-group"
+                        >
+                          <label for="agentId">{{x.label}}</label>
+                          <el-select
+                            id="agentId"
+                            class="width-100"
+                            v-model="filters[x.name]"
+                            filterable
+                            multiple
+                            placeholder="Any"
+                            no-match-text="No Items"
+                            no-data-text="No Options"
+                            @change="_filterSelectedAgents"
+                          >
+                            <el-option
+                              v-for="item in getOptions(x.name)"
+                              :key="item.value"
+                              :label="item.label"
+                              :value="item.value"
+                            >
+                            </el-option>
+                          </el-select>
+                        </div>
+                        <!-- <div class="form-group">
+                          <label for="agentId">Agents</label>
+                          <el-select
+                            id="agentId"
+                            class="width-100"
+                            v-model="selectedAgents"
+                            filterable
+                            multiple
+                            placeholder="Any"
+                            no-match-text="No Items"
+                            no-data-text="No Options"
+                            @change="_filterSelectedAgents"
+                          >
+                            <el-option
+                              v-for="item in agentsList"
+                              :key="item.id"
+                              :label="item.contact.name"
+                              :value="item.id"
+                            >
+                            </el-option>
+                          </el-select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="groupsId">Groups</label>
+                          <el-select
+                            id="groupsId"
+                            class="width-100"
+                            v-model="selectedGroups"
+                            filterable
+                            multiple
+                            placeholder="Any"
+                            no-match-text="No Items"
+                            no-data-text="No Options"
+                            @change="_filterSelectedGroups"
+                          >
+                            <el-option
+                              v-for="item in groupsList"
+                              :key="item.id"
+                              :label="item.name"
+                              :value="item.id"
+                            >
+                            </el-option>
+                          </el-select>
+                        </div>
+                        <div class="form-group">
+                          <label for="priorityId">Priority</label>
+                          <el-select
+                            id="priorityId"
+                            class="width-100"
+                            v-model="selectedPriority"
+                            filterable
+                            clearable
+                            placeholder="Any"
+                            no-match-text="No Items"
+                            no-data-text="No Options"
+                            @change="_filterSelectedPriority"
+                          >
+                            <el-option
+                              v-for="item in priorityList"
+                              :key="item.id"
+                              :label="item.name"
+                              :value="item.id"
+                            >
+                              <span
+                                class="priority"
+                                :style="{'background-color':item.color }"
+                              ></span>
+                              <span>{{ item.name }}</span>
+                            </el-option>
+                          </el-select>
+                        </div> -->
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    class="btn btn-default"
+                    title="Filter"
+                    slot="reference"
+                    style="font-size: 11px; padding: 9px"
+                  >
+                    <i class="fas fa-filter"></i>
+                  </span>
+                </el-popover>
+                <button
+                  class="btn btn-default animate-btn"
+                  style="font-size: 11px; padding: 9px"
+                  title="Refresh"
+                  @click="_handleRefresh"
+                >
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+
+                <div class="pull-right flex-display">
+                  <div style="margin-right: 5px; position: relative">
+                    <input
+                      type="search"
+                      class="form-control"
+                      placeholder="Search"
+                      v-model="searchInput"
+                    />
+                    <span
+                      class="form-control-feedback"
+                      aria-hidden="true"
+                      v-if="searchInput.length == 0"
+                    >
+                      <i class="el-icon-search"></i>
+                    </span>
+                    <span
+                      v-else
+                      class="form-control-feedback"
+                      style="cursor: pointer; pointer-events: auto"
+                      aria-hidden="true"
+                      @click="searchInput=''"
+                    >
+                      <i class="el-icon-error"></i>
+                    </span>
+                  </div>
+                  <div>
+                    <span
+                      class="btn btn-default animate-btn"
+                      style="text-transform: capitalize; padding: 7px 9px"
+                      slot="reference"
+                      title="Configurations"
+                      @click="openSettings"
+                    >
+                      <i class="fas fa-cog"></i> Configurations
+                    </span>
+                  </div>
+                  <div style="margin-left: 5px; margin-right: 5px">
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      content="Previous Page"
+                      placement="bottom"
+                    >
+                      <button
+                        class="btn btn-default btn-page"
+                        @click="_handlepreviousPage"
+                        :disabled="disablePagination || currentPage == 1 "
+                      >
+                        <i
+                          class="el-icon-arrow-left"
+                          style="font-weight: bolder"
+                        ></i>
+                      </button>
+                    </el-tooltip>
+                    <el-tooltip
+                      class="item"
+                      effect="dark"
+                      content="Next page"
+                      placement="bottom"
+                    >
+                      <button
+                        class="btn btn-default btn-page"
+                        @click="_handleNextPage"
+                        :disabled="disablePagination || (hasFilter && currentPage > 10)"
+                      >
+                        <i
+                          class="el-icon-arrow-right"
+                          style="font-weight: bolder"
+                        ></i>
+                      </button>
+                    </el-tooltip>
+                  </div>
+                </div>
+              </h4>
+            </div>
+            <div class="col-md-12" ref="ticketContainer" style="height: 91vh">
+              <div class="flex">
+                <div
+                  v-for="(value, index) in ticketFields"
+                  v-if="value.showInBoard"
+                  :key="value.key"
+                  class="content"
+                >
+                  <h5>
+                    <strong
+                      >{{value.key}} ({{tickets[index] ? tickets[index].length:
+                      0}})</strong
+                    >
+                  </h5>
+                  <div
+                    class="tickets-scroll"
+                    v-infinite-scroll="debouncedLoadMore"
+                    :data-index="index"
+                    :data-value="value.key"
+                    :infinite-scroll-disabled="disableScroll[index]"
+                    infinite-scroll-distance="20"
+                  >
+                    <draggable
+                      :id="value.value"
+                      :data-key="value.key"
+                      :list="tickets[index]"
+                      class="dragArea"
+                      :group="{ name: 'ticketFields'}"
+                      @add="handleTicketDragEnd"
+                      @start="isDragging=true"
+                      @end="isDragging=false"
+                      :component-data="{ value: index }"
+                    >
+                      <ticket-card
+                        v-for="item in tickets[index]"
+                        :key="item.id"
+                        :subject="item.subject"
+                        :description="item.description_text"
+                        :agent-name-prop="getAgentNameFromList(item.responder_id)"
+                        :agent-id-prop="item.responder_id"
+                        :fd-object="fdObject"
+                        :ticket-id="item.id"
+                        :priority="item.priority"
+                        :due-by="item.due_by"
+                        :status-prop="item.status"
+                        :source-prop="item.source"
+                        :fr-due-by="item.fr_due_by"
+                        :logged-in-user="loggedInUser"
+                        :current-status-number="value.value"
+                        :ticket-field="ticketFieldName"
+                        :groups-list="groupsList"
+                        :group="item.group_id"
+                        @ticket-click="handleTicketClicked"
+                      ></ticket-card>
+                    </draggable>
+                    <div v-if="isLoading[index]" class="loader">Loading...</div>
+                  </div>
+                </div>
+                <div class="custom-drag-container" :class="{'drag':isDragging}">
+                  <draggable
+                    class="custom-drag-status cust-drag-status"
+                    v-for="(value, index) in ticketFields"
+                    :id="value.value"
+                    v-if="!value.showInBoard"
+                    :key="value.key"
+                    :group="{ name: 'ticketFields'}"
+                    :data-placeholder="_getState(value.key)"
+                    @add="handleTicketDragEnd"
+                  >
+                  </draggable>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="container-fluid">
+          <el-empty
+            image="./handshake.jpg"
+            image-size="300"
+            description="Please provide your API key in settings page to get started"
+          ></el-empty>
+        </div>
+      </div>
+    </div>
+    <!-- <script src="https://static.freshdev.io/fdk/2.0/assets/fresh_client.js"></script> -->
+    <script async src="{{{appclient}}}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.8.4/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.20.0/vuedraggable.umd.min.js"></script>
+    <script src="components/ticketCard.vue.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

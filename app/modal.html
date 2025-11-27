@@ -1,0 +1,759 @@
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/theme-chalk/index.min.css"
+    />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://static.freshdev.io/fdk/2.0/assets/freshdesk.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/vue-select@3.20.0/dist/vue-select.css"
+    />
+
+    <style>
+      .ticket-details {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ticket-container {
+        height: 100vh;
+      }
+
+      .title-container {
+        padding: 0 15px;
+        display: flex;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .ticket-status {
+        padding: 0 15px;
+        display: flex;
+      }
+
+      .col {
+        margin-left: 15px;
+        width: 215px;
+      }
+
+      .row {
+        display: flex;
+      }
+
+      .status-label {
+        width: 70px;
+      }
+
+      .status-value,
+      .conv-user {
+        font-weight: bold;
+      }
+
+      .go-to-btn {
+        height: 30px;
+        margin-left: auto;
+      }
+
+      .section {
+        margin: 35px 0 5px 0;
+      }
+
+      .section-header {
+        font-weight: bold;
+        /* color: #3e3e3e; */
+        padding: 5px 0;
+        border-bottom: 1px solid #ebeef5;
+      }
+
+      .description,
+      .attachment-container {
+        padding: 0 10px;
+      }
+
+      .converstions {
+        padding: 5px 10px;
+        border-bottom: 1px dashed #c0c0c0;
+      }
+
+      .attachment-container {
+        /* border: 1px solid #c7c0c0; */
+        height: 50px;
+        /* align-self: stretch; */
+      }
+
+      .conv-header {
+        display: flex;
+      }
+
+      .conv-header p {
+        display: inline;
+      }
+
+      .conv-msg {
+        padding: 10px 10px 10px 25px;
+      }
+
+      .private-note {
+        /* color: #635f5f; */
+      }
+
+      .icon {
+        margin-top: 3px;
+      }
+
+      .freshdesk_quote {
+        display: none;
+      }
+      .ticket-fields-container {
+        display: grid;
+        grid-template-columns: repeat(2, 2fr); /* 2 columns */
+        gap: 16px; /* space between items */
+        width: 100%;
+      }
+      .edit-icon {
+        margin-left: auto;
+        margin-right: 20px;
+      }
+      .editable-row .edit-icon {
+        visibility: hidden;
+      }
+
+      /* Show edit icon when hovering the row */
+      .editable-row:hover .edit-icon {
+        visibility: visible;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="modalId">
+      <div class="ticket-container" ref="ticketContainer">
+        <div v-if="ticketData">
+          <div class="ticket-details">
+            <div class="title-container">
+              <el-button
+                class="go-to-btn"
+                type="primary"
+                icon="el-icon-s-promotion"
+                round
+                size="mini"
+                @click="handleEdit"
+                >Go to ticket</el-button
+              >
+            </div>
+            <div class="section ticket-status">
+              <div class="ticket-fields-container">
+                <div
+                  v-for="(field, index) in ticketIparamFields"
+                  :key="index"
+                  class="row editable-row"
+                >
+                  <!-- Label -->
+                  <div class="status-label">
+                    {{field.split(',')[2]==="default_requester"?"Requester":field.split(',')[1].trim()}}:
+                  </div>
+
+                  <!-- Value or Edit Mode -->
+                  <div class="status-value">
+                    <template v-if="editIndex !== index">
+                      <span>{{ handleFieldData(field) || 'N/A' }}</span>
+                    </template>
+
+                    <template
+                      v-else-if="field_config.dropdownFields.includes(field.split(',')[2])"
+                    >
+                      <v-select
+                        :options="getDropdownOptions(field)"
+                        v-model="editValue"
+                        @input="saveInlineEdit(field)"
+                        :clearable="false"
+                        :searchable="true"
+                        :placeholder="'select'"
+                      />
+                    </template>
+
+                    <template v-else-if="field.split(',')[2] === 'custom_date'">
+                      <el-date-picker
+                        v-model="editValue"
+                        type="date"
+                        placeholder="Pick a date"
+                        @change="saveInlineEdit(field)"
+                        class="inline-editor"
+                        format="yyyy-MM-dd"
+                        value-format="yyyy-MM-dd"
+                      />
+                    </template>
+
+                    <template v-else>
+                      <el-input
+                        v-model="editValue"
+                        :type="getInputType(field)"
+                        @keyup.enter.native="saveInlineEdit(field)"
+                        @blur="saveInlineEdit(field)"
+                        class="inline-editor"
+                      />
+                    </template>
+                  </div>
+
+                  <!-- Edit Icon -->
+                  <div
+                    v-if="!field_config.non_editable.includes(field.split(',')[2])"
+                    class="edit-icon"
+                  >
+                    <el-button
+                      size="mini"
+                      icon="el-icon-edit"
+                      circle
+                      @click="enableInlineEdit(index, field)"
+                    ></el-button>
+                  </div>
+                </div>
+
+                <!-- <div v-for="field in ticketIparamFields" class="row">
+                  <div class="status-label">
+                    {{field.split(',')[2]==="default_requester"?"Requester":field.split(',')[1].trim()}}:
+                  </div>
+                  <div class="status-value">
+                    {{handleFieldData(field)||"N/A"}}
+                  </div>
+                  <div class="edit-icon">
+                    <el-button
+                      size="mini"
+                      icon="el-icon-edit"
+                      circle
+                    ></el-button>
+                  </div>
+                </div> -->
+                <div class="row">
+                  <p class="status-label">Due:</p>
+                  <p class="status-value">{{ticketData.due_by | date}}</p>
+                </div>
+              </div>
+
+              <!-- <div class="col">
+                <div class="row">
+                  <p class="status-label">Type:</p>
+                  <p class="status-value">{{ticketData.type || 'N/A'}}</p>
+                </div>
+                <div class="row">
+                  <p class="status-label">Priority:</p>
+                  <p class="status-value">{{showPriority()}}</p>
+                </div>
+                <div class="row">
+                  <p class="status-label">Due:</p>
+                  <p class="status-value">{{ticketData.due_by | date}}</p>
+                </div>
+              </div>
+              <div class="col">
+                <div class="row">
+                  <p class="status-label">Status:</p>
+                  <p class="status-value">{{status || 'N/A'}}</p>
+                </div>
+                <div class="row">
+                  <p class="status-label">Group:</p>
+                  <p class="status-value">{{ticketData.group_id || 'N/A'}}</p>
+                </div>
+                <div class="row">
+                  <p class="status-label">Assignee:</p>
+                  <p class="status-value">{{agentName}}</p>
+                </div>
+              </div> -->
+            </div>
+          </div>
+          <div class="container-fluid">
+            <div class="section">
+              <p class="section-header">Description</p>
+              <p class="description" v-html="ticketData.description"></p>
+            </div>
+            <div class="section">
+              <p class="section-header">Attachments</p>
+              <div class="attachment-container">
+                <span
+                  v-if="ticketData.attachments.length > 0"
+                  v-for="item in ticketData.attachments"
+                >
+                  <a :href="item.attachment_url">{{item.name}}</a>
+                </span>
+                <span v-if="ticketData.attachments.length==0">N/A</span>
+              </div>
+            </div>
+            <div class="section">
+              <p class="section-header">Conversations</p>
+              <div
+                class="converstions"
+                v-if="ticketData.conversations.length > 0"
+                v-for="conversation in ticketData.conversations"
+              >
+                <div class="conv-header">
+                  <div><i class="el-icon-view private-note icon"></i></div>
+                  <div style="padding: 0 10px">
+                    <p class="conv-user" v-if="!conversation.incoming">
+                      {{getAgentNameFromList(conversation.user_id)}}
+                    </p>
+                    <p class="conv-user" v-else>{{conversation.from_email}}</p>
+                    <p v-if="conversation.private && conversation.source == 2">
+                      Added a private note<span v-if="conversation.incoming"
+                        >, Notified to:
+                        <b>{{conversation.to_emails.join(",")}}</b></span
+                      >
+                    </p>
+                    <p v-if="!conversation.private && conversation.source == 2">
+                      Added a Public note
+                    </p>
+                    <p v-if="conversation.source == 8">
+                      forwarded to <b>{{conversation.to_emails.join(",")}}</b>
+                    </p>
+                    <p v-if="conversation.source == 0">
+                      replied to <b>{{conversation.to_emails.join(",")}}</b>
+                    </p>
+                    <br />
+                    <p><b>On</b> {{conversation.updated_at | date }}</p>
+                  </div>
+                </div>
+                <div class="conv-msg">
+                  <p v-html="conversation.body"></p>
+                </div>
+              </div>
+              <div
+                style="padding: 5px 10px"
+                v-if="ticketData.conversations.length == 0"
+              >
+                N/A
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script async src="{{{appclient}}}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-select@3.20.0"></script>
+
+    <script>
+      (function () {
+        new Vue({
+          el: "#modalId",
+          data: {
+            fdObjectModal: null,
+            ticketId: 0,
+            ticketData: null,
+            loading: null,
+            status: null,
+            agentName: null,
+            agentsList: [],
+            ticketIparamFields: [],
+            ticketFields: [],
+            agentId: null,
+            companyName: null,
+            requesterName: null,
+            editIndex: null,
+            editValue: null,
+            field_config: {
+              dropdownFields: [
+                "default_priority",
+                "default_group",
+                "default_status",
+                "default_ticket_type",
+                "default_source",
+                "custom_dropdown",
+                "default_agent",
+              ],
+              non_editable: ["default_company", "default_requester"],
+            },
+          },
+
+          created() {
+            this.initFD();
+            Vue.component("v-select", window.VueSelect.VueSelect);
+          },
+
+          filters: {
+            date: function (str) {
+              if (!str) {
+                return "N/A";
+              }
+              return moment(str).format("lll");
+            },
+          },
+
+          methods: {
+            initFD() {
+              return app
+                .initialized()
+                .then((client) => {
+                  this.fdObjectModal = client;
+                  this.getParamsFrmParent();
+                })
+                .catch((error) => {
+                  console.log(error);
+                  const errResp = JSON.parse(error.response);
+                  this.showNotify(
+                    { message: errResp, title: "Error" },
+                    "error"
+                  );
+                });
+            },
+
+            showPriority() {
+              let priority = "Low";
+              switch (this.ticketData.priority) {
+                case 1:
+                  priority = "Low";
+                  break;
+                case 2:
+                  priority = "Medium";
+                  break;
+                case 3:
+                  priority = "High";
+                  break;
+                case 4:
+                  priority = "Urgent";
+                  break;
+                default:
+                  break;
+              }
+              return priority;
+            },
+
+            handleFieldData(data) {
+              const [apiName, , type] = data.split(",");
+
+              const { ticketData, ticketFields } = this;
+
+              const resolveChoice = (fieldName, value) => {
+                const field = ticketFields.find((f) => f.name === fieldName);
+                if (!field?.choices) return null;
+                if (fieldName === "status") {
+                  value = value.toString();
+                  const key = Object.keys(field.choices).find(
+                    (key) => key === value
+                  );
+                  return field.choices[key][0];
+                }
+                return Object.keys(field.choices).find(
+                  (key) => field.choices[key] === value
+                );
+              };
+
+              const handlers = {
+                default_status: () =>
+                  resolveChoice("status", ticketData.status),
+                default_priority: () => this.showPriority(),
+                default_group: () =>
+                  resolveChoice("group", ticketData.group_id),
+                default_agent: () => this.agentName,
+                default_ticket_type: () => ticketData.type,
+                default_source: () =>
+                  resolveChoice("source", ticketData.source),
+                default_company: () => this.companyName,
+                default_requester: () => this.requesterName,
+              };
+              if (handlers[type]) {
+                return handlers[type]();
+              }
+
+              if (apiName.startsWith("cf_")) {
+                return ticketData.custom_fields?.[apiName] ?? null;
+              }
+
+              // Fallback: regular ticket field value
+              return ticketData[apiName] ?? null;
+            },
+            showLoading() {
+              this.loading = this.$loading({
+                lock: true,
+                target: this.$refs.ticketContainer,
+              });
+            },
+
+            closeLoading() {
+              if (this.loading !== null) {
+                this.loading.close();
+              }
+            },
+
+            getTicketDetails() {
+              this.fdObjectModal.request
+                .invokeTemplate("getTicketDetails", {
+                  context: { ticketId: this.ticketId },
+                })
+                .then((data) => {
+                  if (data.status == 200) {
+                    this.ticketData = JSON.parse(data.response);
+                    console.log(this.ticketData);
+                    if (
+                      this.ticketIparamFields.includes(
+                        "company,Company,default_company"
+                      )
+                    )
+                      this.getCompanyName(this.ticketData.company_id);
+                    if (
+                      this.ticketIparamFields.includes(
+                        "requester,Search a requester,default_requester"
+                      )
+                    )
+                      this.getRequesterName(this.ticketData.requester_id);
+                    this.closeLoading();
+                  } else {
+                    this.closeLoading();
+                    throw data;
+                  }
+                })
+                .catch((error) => {
+                  this.closeLoading();
+                  console.log(error);
+                  const errResp = JSON.parse(error.response);
+                  this.showNotify(
+                    { message: errResp, title: "Error" },
+                    "error"
+                  );
+                });
+            },
+
+            async getTicketFields() {
+              try {
+                const { response, status } =
+                  await this.fdObjectModal.request.invokeTemplate(
+                    "getTicketFields",
+                    {
+                      context: { agentId: this.agentId },
+                    }
+                  );
+                if (status !== 200) return;
+                this.ticketFields = JSON.parse(response);
+              } catch (error) {
+                console.error(error);
+              }
+            },
+
+            handleEdit() {
+              this.fdObjectModal.instance.send({
+                message: {
+                  fromModel: true,
+                  redirect: this.ticketId,
+                },
+              });
+              this.fdObjectModal.instance.close();
+            },
+            async getCompanyName(companyId) {
+              if (!companyId) return;
+              try {
+                const { response, status } =
+                  await this.fdObjectModal.request.invokeTemplate(
+                    "getTicketCompany",
+                    {
+                      context: { companyId, agentId: this.agentId },
+                    }
+                  );
+                if (status === 200) {
+                  console.log(JSON.parse(response));
+                  this.companyName = JSON.parse(response).name;
+                }
+              } catch (error) {
+                console.error(error);
+              }
+            },
+            async getRequesterName(requesterId) {
+              if (!requesterId) return;
+              try {
+                const { response, status } =
+                  await this.fdObjectModal.request.invokeTemplate(
+                    "getTicketRequester",
+                    {
+                      context: { requesterId, agentId: this.agentId },
+                    }
+                  );
+                if (status === 200) {
+                  console.log(JSON.parse(response));
+                  this.requesterName = JSON.parse(response).name;
+                }
+              } catch (error) {
+                console.error(error);
+              }
+            },
+            getParamsFrmParent() {
+              this.fdObjectModal.instance.context().then((context) => {
+                if (context.data) {
+                  console.log(context.data);
+
+                  this.ticketId = context.data.ticketId || 0;
+                  this.agentName = context.data.agentName;
+                  this.status = context.data.status;
+                  this.agentsList = context.data.agentsList;
+                  this.ticketIparamFields = context.data.iparams.ticket_fields;
+                  this.agentId = context.data.loggedInUser;
+
+                  this.showLoading();
+                  this.getTicketDetails();
+                  this.getTicketFields();
+                } else {
+                  this.fdObjectModal.instance.close();
+                }
+              });
+            },
+            showNotify(message, type) {
+              this.$notify({
+                title: message.title,
+                message: message.message,
+                type,
+              });
+              // this.fdObjectModal.interface.trigger("showNotify", {
+              //   type: type,
+              //   title: message.status || "",
+              //   message: message.message,
+              // });
+            },
+
+            getAgentNameFromList(agentId) {
+              let agentName = this.agentsList.filter(
+                (elm) => elm.id == agentId
+              );
+              try {
+                return agentName[0].contact.name;
+              } catch (e) {
+                return "Unknown User";
+              }
+            },
+            enableInlineEdit(index, field) {
+              this.editIndex = index;
+              this.editValue = this.handleFieldData(field); // preload existing value
+            },
+
+            saveInlineEdit(field) {
+              // Update the real data source
+              this.updateFieldValue(field, this.editValue);
+
+              // Exit edit mode
+              this.editIndex = null;
+              this.editValue = null;
+
+              // this.$message.success("Updated!");
+            },
+            getDropdownOptions(field) {
+              const [name, , type] = field.split(",");
+
+              if (type === "default_agent") {
+                return this.agentsList.map((agent) => ({
+                  label: agent.contact.name,
+                  value: agent.id,
+                }));
+              }
+
+              const fieldObj = this.ticketFields.find(
+                (x) => x.type === type && x.name === name
+              );
+
+              if (!fieldObj?.choices) return [];
+
+              const choices = fieldObj.choices;
+
+              // Convert object or array to dropdown format
+              return Array.isArray(choices)
+                ? choices.map((c) => ({ label: c, value: c }))
+                : Object.keys(choices).map((key) => ({
+                    label: choices[key][0] || key,
+                    value: Array.isArray(choices[key])
+                      ? Number(key)
+                      : choices[key],
+                  }));
+            },
+            getInputType(field) {
+              const type = field.split(",")[2];
+              if (type === "custom_text") return "text";
+              if (type === "custom_number" || type === "custom_decimal")
+                return "number";
+              return "text";
+            },
+
+            async updateFieldValue(field, newValue) {
+              console.log(newValue);
+
+              let value = newValue?.value ?? newValue;
+              const [name, , type] = field.split(",");
+
+              let body = {};
+              const map = {
+                default_group: "group_id",
+                default_agent: "responder_id",
+                default_ticket_type: "type",
+              };
+
+              if (map[type]) {
+                body[map[type]] = value;
+              } else if (name.startsWith("cf_")) {
+                if (!body.custom_fields) body.custom_fields = {};
+
+                if (type === "custom_number" || type === "custom_decimal") {
+                  value = Number(value);
+                }
+
+                body.custom_fields[name] = value;
+              } else {
+                body[name] = value;
+              }
+
+              try {
+                const { response, status } =
+                  await this.fdObjectModal.request.invokeTemplate(
+                    "updateTicket",
+                    {
+                      context: {
+                        ticketId: this.ticketId,
+                        agentId: this.agentId,
+                      },
+                      body: JSON.stringify(body),
+                    }
+                  );
+
+                if (status === 200) {
+                  const updated = JSON.parse(response);
+                  console.log(updated);
+                  this.ticketData = {
+                    ...this.ticketData,
+                    ...updated,
+                    custom_fields: {
+                      ...this.ticketData.custom_fields,
+                      ...updated.custom_fields,
+                    },
+                  };
+                  if (type === "default_agent")
+                    this.agentName = this.getAgentNameFromList(
+                      updated.responder_id
+                    );
+
+                  this.$forceUpdate();
+                  this.showNotify(
+                    {
+                      title: "Success",
+                      message: "Ticket updated",
+                    },
+                    "success"
+                  );
+                }
+              } catch (error) {
+                console.error(error);
+                this.showNotify(
+                  {
+                    title: "Error",
+                    message: "Failed to update ticket",
+                  },
+                  "error"
+                );
+              }
+            },
+          },
+        });
+      })();
+    </script>
+  </body>
+</html>

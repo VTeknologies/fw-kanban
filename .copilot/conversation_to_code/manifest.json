@@ -18,13 +18,17 @@
         "getTicketFields": {},
         "updateTicket": {},
         "getTicketDetails": {},
-        "getAgentsListForSettings": {}
+        "getAgentsListForSettings": {},
+        "getTicketFieldsForSettings": {},
+        "getTicketCompany": {},
+        "getTicketRequester": {},
+        "fetchAgentInfo": {}
       }
     }
   },
   "engines": {
     "node": "18.20.6",
-    "fdk": "9.7.2"
+    "fdk": "9.7.4"
   },
   "app": {
     "tracking_id": "iybe97o9qrv19wzmr02m"

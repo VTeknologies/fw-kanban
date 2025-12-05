@@ -193,11 +193,11 @@
           <div class="col-md-12" :class="{'hide': isHidden }">
             <div class="row">
               <div class="col-md-12" style="width: 100%">
-                <h5>Available Fields</h5>
+                <h5>Available Options</h5>
                 <draggable
                   class="dragArea list-group"
                   :list="choices"
-                  :group="{ name: 'SelectedChoice', pull: true }"
+                  :group="{ name: 'SelectedChoice',  pull: true, put: true }"
                   :clone="clone"
                   :move="checkMove"
                 >
@@ -216,7 +216,7 @@
               <div style="display: flex">
                 <div class="col-md-12" style="width: 50%">
                   <h5>
-                    Visible Fields <span style="color: red">*</span>
+                    Visible Options <span style="color: red">*</span>
                     <el-tooltip
                       class="item"
                       effect="dark"
@@ -244,7 +244,7 @@
                     id="visibleFields"
                     class="dragArea-selected list-group empty-text"
                     :list="selectedChoice"
-                    :group="{name:'SelectedChoice'}"
+                    :group="{name:'SelectedChoice', pull: true, put: true }"
                     data-placeholder="Drag and Drop from available
                   fields."
                     :move="checkMove"
@@ -268,7 +268,7 @@
                 </div>
                 <div class="col-md-12" style="width: 50%">
                   <h5>
-                    Invisible Fields
+                    Invisible Options
                     <el-tooltip
                       class="item"
                       effect="dark"
@@ -293,7 +293,7 @@
                     id="invisibleFields"
                     class="dragArea-selected list-group empty-text"
                     :list="hiddenChoice"
-                    :group="{name:'SelectedChoice'}"
+                    :group="{name:'SelectedChoice', pull: true, put: true }"
                     data-placeholder="Drag and Drop from available
                   fields."
                     :move="checkMove"
@@ -356,6 +356,7 @@
             isHidden: true,
             choiceLimit: 25,
             hiddenLimit: 2,
+            dbData: {},
           },
 
           methods: {
@@ -415,21 +416,44 @@
                 .then((data) => {
                   if (data.status == 200) {
                     let response = JSON.parse(data.response);
-                    this.dpValues = response.filter((value) => {
+                    // this.dpValues = response.filter((value) => {
+                    //   return (
+                    //     value.type !== "nested_field" &&
+                    //     value.type !== "default_source" &&
+                    //     value.type !== "default_product" &&
+                    //     !!value.choices
+                    //   );
+                    // });
+                    this.dpValues = response.filter((v) => {
+                      const count = v.choices
+                        ? Array.isArray(v.choices)
+                          ? v.choices.length
+                          : Object.keys(v.choices).length
+                        : 0;
                       return (
-                        value.type !== "nested_field" &&
-                        value.type !== "default_source" &&
-                        value.type !== "default_product" &&
-                        !!value.choices
+                        ![
+                          "nested_field",
+                          "default_source",
+                          "default_product",
+                        ].includes(v.type) &&
+                        count > 0 &&
+                        count <= 27
                       );
                     });
                     this.getData()
                       .then((data) => {
-                        this.selectedTicketField = data.selectedTicketField;
-                        this.selectedChoiceId = data.selectedChoiceId;
+                        if (!data.field_data) {
+                          this.dbData.field_data = [data];
+                        } else this.dbData = { ...data };
+                        this.selectedTicketField =
+                          this.dbData.field_data[0].selectedTicketField;
+                        this.selectedChoiceId =
+                          this.dbData.field_data[0].selectedChoiceId;
                         this._handleChange();
-                        this.selectedChoice = data.selectedChoice || [];
-                        this.hiddenChoice = data.hiddenChoice || [];
+                        this.selectedChoice =
+                          this.dbData.field_data[0].selectedChoice || [];
+                        this.hiddenChoice =
+                          this.dbData.field_data[0].hiddenChoice || [];
                         this.choices = this.choices.filter((x) => {
                           return (
                             !this.selectedChoice.some(
@@ -441,6 +465,8 @@
                         this.closeLoading();
                       })
                       .catch((err) => {
+                        console.error(err);
+
                         this.closeLoading();
                       });
                   } else {
@@ -453,7 +479,12 @@
                 });
             },
 
-            _handleChange() {
+            async _handleChange() {
+              const dbData = await this.getData();
+              const existingField = dbData.field_data.find(
+                (f) => f.selectedChoiceId === this.selectedChoiceId
+              );
+
               let selected = this.dpValues.filter((value) => {
                 return value.id === this.selectedChoiceId;
               });
@@ -488,6 +519,23 @@
                   selected[0].type,
                   selected[0].name
                 );
+                if (existingField) {
+                  this.selectedChoiceId = existingField.selectedChoiceId;
+                  const allChoices = [
+                    ...existingField.selectedChoice,
+                    ...existingField.hiddenChoice,
+                  ];
+                  this.choices = keyValue.filter((x) => {
+                    return !allChoices.some((t) => t.value == x.value);
+                  });
+
+                  console.log(this.choices);
+
+                  this.selectedChoice = existingField.selectedChoice || [];
+                  this.hiddenChoice = existingField.hiddenChoice || [];
+                  this.isHidden = false;
+                  return;
+                }
                 this.choices = keyValue;
                 this.selectedChoice = [];
                 this.hiddenChoice = [];
@@ -548,12 +596,17 @@
             },
 
             setData() {
+              this.dbData.field_data.push({
+                selectedChoice: this.selectedChoice,
+                hiddenChoice: this.hiddenChoice || [],
+                selectedTicketField: this.selectedTicketField,
+                selectedChoiceId: this.selectedChoiceId,
+              });
               this.fdObject.db
                 .set(`ticket-fields-${this.loggedInUser}`, {
-                  selectedChoice: this.selectedChoice,
-                  hiddenChoice: this.hiddenChoice || [],
-                  selectedTicketField: this.selectedTicketField,
-                  selectedChoiceId: this.selectedChoiceId,
+                  field_data: this.dbData.field_data,
+                  group: "",
+                  filter: {},
                 })
                 .then(
                   (data) => {

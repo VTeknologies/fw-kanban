@@ -386,7 +386,35 @@ input[type="tel"] {
 .el-select .el-input__inner:focus {
   border-color: #02b875 !important;
 }
+.load-more {
+  padding: 10px;
+}
+.remove-icon {
+  cursor: pointer;
+  color: #ff4d4f;
+  align-content: center;
+  /* visibility: hidden; */
+}
+/* .filter-items:hover .remove-icon {
+  visibility: visible;
+  cursor: pointer;
+  color: #ff4d4f;
+} */
 
+.field-item {
+  padding: 5px 3px;
+  text-align: left;
+  border-bottom: 0.5px solid #eeeeee;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.field-item:hover {
+  background-color: #f5f5f5;
+}
+#field-item-container .field-item:last-child {
+  border-bottom: none;
+}
 @-webkit-keyframes low {
   0% {
     -webkit-box-shadow: 0 0 0 0 rgb(160, 215, 106, 0.4);

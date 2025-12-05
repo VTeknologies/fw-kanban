@@ -15,6 +15,11 @@
       integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf"
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/css/crayons-min.css"
+    />
+
     <link rel="stylesheet" type="text/css" href="style.css" />
   </head>
 
@@ -67,103 +72,62 @@
                     <div class="row">
                       <div class="col-md-12">
                         <div
-                          v-for="x in dropdownFields"
+                          v-for="x in filters.defaultFields"
                           :key="x.id"
-                          class="form-group"
+                          class="form-group filter-items"
                         >
                           <label for="agentId">{{x.label}}</label>
-                          <el-select
-                            id="agentId"
-                            class="width-100"
-                            v-model="filters[x.name]"
-                            filterable
-                            multiple
-                            placeholder="Any"
-                            no-match-text="No Items"
-                            no-data-text="No Options"
-                            @change="_filterSelectedAgents"
-                          >
-                            <el-option
-                              v-for="item in getOptions(x.name)"
-                              :key="item.value"
-                              :label="item.label"
-                              :value="item.value"
+                          <div class="fw-flex fw-gap-2">
+                            <el-select
+                              id="agentId"
+                              class="width-100"
+                              v-model="filters[x.name]"
+                              filterable
+                              multiple
+                              placeholder="Any"
+                              no-match-text="No Items"
+                              no-data-text="No Options"
+                              @change="_filterSelectedAgents"
                             >
-                            </el-option>
-                          </el-select>
+                              <el-option
+                                v-for="item in getOptions(x.name)"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                              >
+                              </el-option>
+                            </el-select>
+                            <div
+                              class="remove-icon"
+                              @click="handleRemove(x.name)"
+                              title="Remove"
+                            >
+                              <i class="el-icon-remove-outline"></i>
+                            </div>
+                          </div>
                         </div>
-                        <!-- <div class="form-group">
-                          <label for="agentId">Agents</label>
-                          <el-select
-                            id="agentId"
-                            class="width-100"
-                            v-model="selectedAgents"
-                            filterable
-                            multiple
-                            placeholder="Any"
-                            no-match-text="No Items"
-                            no-data-text="No Options"
-                            @change="_filterSelectedAgents"
+                        <div>
+                          <el-popover
+                            placement="right"
+                            title="Add More Filters"
+                            width="200"
+                            trigger="click"
                           >
-                            <el-option
-                              v-for="item in agentsList"
-                              :key="item.id"
-                              :label="item.contact.name"
-                              :value="item.id"
+                            <div id="field-item-container">
+                              <div
+                                v-for="field in getAdditionalFields()"
+                                :key="field.name"
+                                class="field-item"
+                                @click="addFilterField(field)"
+                              >
+                                {{field.label}}
+                              </div>
+                            </div>
+                            <el-button slot="reference" type="info"
+                              >Add More</el-button
                             >
-                            </el-option>
-                          </el-select>
+                          </el-popover>
                         </div>
-
-                        <div class="form-group">
-                          <label for="groupsId">Groups</label>
-                          <el-select
-                            id="groupsId"
-                            class="width-100"
-                            v-model="selectedGroups"
-                            filterable
-                            multiple
-                            placeholder="Any"
-                            no-match-text="No Items"
-                            no-data-text="No Options"
-                            @change="_filterSelectedGroups"
-                          >
-                            <el-option
-                              v-for="item in groupsList"
-                              :key="item.id"
-                              :label="item.name"
-                              :value="item.id"
-                            >
-                            </el-option>
-                          </el-select>
-                        </div>
-                        <div class="form-group">
-                          <label for="priorityId">Priority</label>
-                          <el-select
-                            id="priorityId"
-                            class="width-100"
-                            v-model="selectedPriority"
-                            filterable
-                            clearable
-                            placeholder="Any"
-                            no-match-text="No Items"
-                            no-data-text="No Options"
-                            @change="_filterSelectedPriority"
-                          >
-                            <el-option
-                              v-for="item in priorityList"
-                              :key="item.id"
-                              :label="item.name"
-                              :value="item.id"
-                            >
-                              <span
-                                class="priority"
-                                :style="{'background-color':item.color }"
-                              ></span>
-                              <span>{{ item.name }}</span>
-                            </el-option>
-                          </el-select>
-                        </div> -->
                       </div>
                     </div>
                   </div>
@@ -176,6 +140,68 @@
                     <i class="fas fa-filter"></i>
                   </span>
                 </el-popover>
+                <el-popover>
+                  <div class="el-popover__title">
+                    Fields
+                    <button
+                      class="btn btn-link pull-right"
+                      style="font-size: 9px; padding: 7px"
+                      title="Clear Group by"
+                      @click="_handleRemoveGroupBy"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-12">
+                      <div style="display: flex; gap: 10px">
+                        <el-select
+                          id="sortBy"
+                          class="width-100"
+                          v-model="sortBy.field"
+                          placeholder="Select Field"
+                          no-match-text="No Items"
+                          no-data-text="No Options"
+                          @change="_handleSortBy"
+                        >
+                          <el-option
+                            v-for="item in getNumberList()"
+                            :key="item.value"
+                            :label="item.label"
+                            :value="item.value"
+                          >
+                          </el-option>
+                        </el-select>
+                        <el-select
+                          id="sortByOrder"
+                          class="width-100"
+                          v-model="sortBy.order"
+                          placeholder="Select Order"
+                          no-match-text="No Items"
+                          no-data-text="No Options"
+                          @change="_handleSortByOrder"
+                        >
+                          <el-option
+                            v-for="item in ['Ascending', 'Descending']"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                          >
+                          </el-option>
+                        </el-select>
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    class="btn btn-default"
+                    style="font-size: 11px; padding: 9px; font-weight: bold"
+                    title="Sort"
+                    slot="reference"
+                  >
+                    <i class="el-icon-sort"></i>
+                  </span>
+                </el-popover>
+
                 <button
                   class="btn btn-default animate-btn"
                   style="font-size: 11px; padding: 9px"
@@ -184,6 +210,61 @@
                 >
                   <i class="fas fa-sync-alt"></i>
                 </button>
+                <!-- <button
+                  class="btn btn-default"
+                  title="Group by"
+                  @click="_handleGroupBy"
+                >
+                  Group by
+                </button> -->
+                <el-popover placement="bottom" width="300" trigger="click">
+                  <div class="el-popover__title">
+                    Fields
+                    <button
+                      class="btn btn-link pull-right"
+                      style="font-size: 9px; padding: 7px"
+                      title="Clear Group by"
+                      @click="_handleRemoveGroupBy"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-12">
+                      <!-- <div
+                        v-for="x in dropdownFields"
+                        :key="x.id"
+                        class="form-group"
+                      >
+                        <label for="agentId">{{x.label}}</label> -->
+                      <el-select
+                        id="agentId"
+                        class="width-100"
+                        v-model="groupBy"
+                        placeholder="Select"
+                        no-match-text="No Items"
+                        no-data-text="No Options"
+                        @change="_handleGroupBy"
+                      >
+                        <el-option
+                          v-for="item in getList()"
+                          :key="item.value"
+                          :label="item.label"
+                          :value="item.value"
+                        >
+                        </el-option>
+                      </el-select>
+                      <!-- </div> -->
+                    </div>
+                  </div>
+                  <span
+                    class="btn btn-default"
+                    title="Group by"
+                    slot="reference"
+                  >
+                    Group by
+                  </span>
+                </el-popover>
 
                 <div class="pull-right flex-display">
                   <div style="margin-right: 5px; position: relative">
@@ -274,13 +355,18 @@
                       0}})</strong
                     >
                   </h5>
-                  <div
+                  <!-- <div
                     class="tickets-scroll"
                     v-infinite-scroll="debouncedLoadMore"
                     :data-index="index"
-                    :data-value="value.key"
+                    :data-value="value.value"
                     :infinite-scroll-disabled="disableScroll[index]"
                     infinite-scroll-distance="20"
+                  > -->
+                  <div
+                    class="tickets-scroll"
+                    :data-index="index"
+                    :data-value="value.value"
                   >
                     <draggable
                       :id="value.value"
@@ -308,15 +394,26 @@
                         :source-prop="item.source"
                         :fr-due-by="item.fr_due_by"
                         :logged-in-user="loggedInUser"
-                        :current-status-number="value.value"
+                        :current-status-number="value.value.toString()"
                         :ticket-field="ticketFieldName"
                         :groups-list="groupsList"
                         :group="item.group_id"
                         @ticket-click="handleTicketClicked"
                       ></ticket-card>
+                      <div v-if="hasMore[index]" class="load-more">
+                        <el-button
+                          @click="loadMoreWrapper"
+                          style="width: 100%"
+                          size="mini"
+                          plain
+                          :loading="isLoadingMore[index]"
+                          >Load More</el-button
+                        >
+                      </div>
                     </draggable>
-                    <div v-if="isLoading[index]" class="loader">Loading...</div>
+                    <!-- <div v-if="isLoading[index]" class="loader">Loading...</div> -->
                   </div>
+                  <!-- </div> -->
                 </div>
                 <div class="custom-drag-container" :class="{'drag':isDragging}">
                   <draggable

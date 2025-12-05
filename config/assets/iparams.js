@@ -12,6 +12,7 @@ document.onreadystatechange = async () => {
     client = await app.initialized();
     $("#validate-btn").on("click", handleValidation);
     $("#ticket-fields").on("fwChange", handleTicketFields);
+    $("#toggle").on("fwChange", handleToggleChange);
   }
 };
 
@@ -316,4 +317,12 @@ const getTicketFields = async (values) => {
 
 const handleTicketFields = (e) => {
   iparams.ticket_fields = e.target.value;
+};
+
+const handleToggleChange = (e) => {
+  console.log(e.target.checked);
+
+  iparams["enable_api_key_access"] = e.target.checked;
+  if (e.target.checked) $("#wrapper").show();
+  else $("#wrapper").hide();
 };

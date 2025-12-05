@@ -5,7 +5,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/agents",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.api_key) %>",
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
         "Content-Type": "application/json"
       },
       "query": {
@@ -55,7 +55,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/ticket_fields?type=default_status",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.api_key) %>",
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
         "Content-Type": "application/json"
       }
     }
@@ -66,23 +66,16 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/ticket_fields?type=default_group",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.api_key) %>",
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
         "Content-Type": "application/json"
       }
     }
   },
   "getAllTickets": {
     "schema": {
-      "method": "GET",
-      "host": "<%= iparam.domain %>",
-      "path": "/api/v2/tickets",
       "headers": {
         "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
         "Content-Type": "application/json"
-      },
-      "query": {
-        "page": "<%= context.page %>",
-        "per_page": "100"
       }
     }
   },
@@ -103,7 +96,18 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/ticket_fields",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.api_key) %>",
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  "getTicketFieldsForSettings": {
+    "schema": {
+      "method": "GET",
+      "host": "<%= context.domain %>",
+      "path": "/api/v2/ticket_fields",
+      "headers": {
+        "Authorization": "Basic <%= encode(context.api_key) %>",
         "Content-Type": "application/json"
       }
     }
@@ -114,7 +118,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/tickets/<%= context.ticketId %>",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.api_key) %>",
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
         "Content-Type": "application/json"
       }
     }
@@ -126,6 +130,36 @@
       "path": "/api/v2/tickets/<%= context.ticketId %>?include=conversations",
       "headers": {
         "Authorization": "Basic <%= encode(iparam.api_key) %>",
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  "getTicketCompany": {
+    "schema": {
+      "method": "GET",
+      "host": "<%= iparam.domain %>",
+      "path": "/api/v2/companies/<%= context.companyId %>",
+      "headers": {
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  "getTicketRequester": {
+    "schema": {
+      "method": "GET",
+      "host": "<%= iparam.domain %>",
+      "path": "/api/v2/contacts/<%= context.requesterId %>",
+      "headers": {
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Content-Type": "application/json"
+      }
+    }
+  },
+  "fetchAgentInfo": {
+    "schema": {
+      "headers": {
+        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
         "Content-Type": "application/json"
       }
     }

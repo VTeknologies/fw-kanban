@@ -270,32 +270,42 @@ let TicketCard = Vue.component("TicketCard", {
         this.status
       );
     },
-    getAgentName() {
-      if (this.agentId !== "" && this.agentId !== null) {
-        // const url = "<%= iparam.$domain.url %>/api/v2/agents/" + this.agentId;
-        // const headers = {
-        //   Authorization: "Basic <%= encode(iparam.api_key) %>",
-        // };
-        // const options = {
-        //   headers: headers,
-        // };
-        this.fdObject.request
-          .invokeTemplate("getAgent", {
-            context: {
-              agentId: this.agentId,
-            },
-          })
-          .then((data) => {
-            if (data.status == 200) {
-              this.agentName = JSON.parse(data.response).contact.name;
-            } else {
-              throw data;
-            }
-          })
-          .catch((error) => {
-            console.error(error);
-            this.showNotify(JSON.parse(error.response).errors[0], "danger");
-          });
+    async getAgentName() {
+      if (this.agentId !== "" && this.agentId) {
+        console.log(this.agentId);
+        try {
+          const { response, status } =
+            await this.fdObject.request.invokeTemplate("getAgent", {
+              context: {
+                agentId: this.agentId,
+              },
+            });
+          if (status == 200) {
+            this.agentName = JSON.parse(response).contact.name;
+          } else {
+            throw response;
+          }
+        } catch (error) {
+          console.error(error);
+          this.showNotify("error occured", "danger");
+        }
+        // this.fdObject.request
+        //   .invokeTemplate("getAgent", {
+        //     context: {
+        //       agentId: this.agentId,
+        //     },
+        //   })
+        //   .then((data) => {
+        //     if (data.status == 200) {
+        //       this.agentName = JSON.parse(data.response).contact.name;
+        //     } else {
+        //       throw data;
+        //     }
+        //   })
+        //   .catch((error) => {
+        //     console.error(error);
+        //     this.showNotify("error occured", "danger");
+        //   });
       } else {
         this.agentName = "N/A";
       }

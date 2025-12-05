@@ -1,0 +1,125 @@
+.ticket-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-container {
+  height: 100vh;
+}
+
+.title-container {
+  padding: 0 15px;
+  display: flex;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.ticket-status {
+  padding: 0 15px;
+  display: flex;
+}
+
+.col {
+  margin-left: 15px;
+  width: 215px;
+}
+
+.row {
+  display: flex;
+}
+
+.status-label {
+  width: 70px;
+}
+.status-value span {
+  display: inline-block !important;
+  white-space: nowrap !important;
+}
+.status-value,
+.conv-user {
+  font-weight: bold;
+}
+
+.go-to-btn {
+  height: 30px;
+  margin-left: auto;
+}
+
+.section {
+  margin: 35px 0 5px 0;
+}
+
+.section-header {
+  font-weight: bold;
+  /* color: #3e3e3e; */
+  padding: 5px 0;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.description,
+.attachment-container {
+  padding: 0 10px;
+}
+
+.converstions {
+  padding: 5px 10px;
+  border-bottom: 1px dashed #c0c0c0;
+}
+
+.attachment-container {
+  /* border: 1px solid #c7c0c0; */
+  height: 50px;
+  /* align-self: stretch; */
+}
+
+.conv-header {
+  display: flex;
+}
+
+.conv-header p {
+  display: inline;
+}
+
+.conv-msg {
+  padding: 10px 10px 10px 25px;
+}
+
+.private-note {
+  /* color: #635f5f; */
+}
+
+.icon {
+  margin-top: 3px;
+}
+
+.freshdesk_quote {
+  display: none;
+}
+.ticket-fields-container {
+  display: grid;
+  grid-template-columns: repeat(2, 2fr); /* 2 columns */
+  gap: 16px; /* space between items */
+  width: 100%;
+}
+.edit-icon {
+  margin-left: auto;
+  margin-right: 20px;
+}
+.editable-row .edit-icon {
+  visibility: hidden;
+}
+
+/* Show edit icon when hovering the row */
+.editable-row:hover .edit-icon {
+  visibility: visible;
+}
+.my-vselect .vs__dropdown-toggle {
+  border: 1px solid #409eff; /* Element UI blue */
+  border-radius: 6px;
+  min-height: 5px;
+}
+.my-vselect .vs__dropdown-menu {
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}

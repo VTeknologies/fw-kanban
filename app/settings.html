@@ -521,15 +521,27 @@
                 );
                 if (existingField) {
                   this.selectedChoiceId = existingField.selectedChoiceId;
-                  const allChoices = [
+                  let allChoices = [
                     ...existingField.selectedChoice,
                     ...existingField.hiddenChoice,
                   ];
+                  // if (
+                  //   existingField.type !== "default_status" &&
+                  //   existingField.type !== "default_priority"
+                  // ) {
+                  //   allChoices.push({ key: "UnAssigned", value: "Unassigned" });
+                  // }
+                  // allChoices = [
+                  //   ...allChoices,
+                  //   ...existingField.selectedChoice,
+                  //   ...existingField.hiddenChoice,
+                  // ];
                   this.choices = keyValue.filter((x) => {
                     return !allChoices.some((t) => t.value == x.value);
                   });
+                  // console.log(keyValue);
 
-                  console.log(this.choices);
+                  // console.log(allChoices);
 
                   this.selectedChoice = existingField.selectedChoice || [];
                   this.hiddenChoice = existingField.hiddenChoice || [];

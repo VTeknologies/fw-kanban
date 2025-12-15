@@ -14,6 +14,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/vue-select@3.20.0/dist/vue-select.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/css/crayons-min.css"
+    />
 
     <link rel="stylesheet" href="model.css" />
   </head>
@@ -42,18 +46,41 @@
             </div>
             <div class="section ticket-status">
               <div class="ticket-fields-container">
-                <div
+                <el-card
                   v-for="(field, index) in ticketIparamFields"
                   :key="index"
-                  class="row editable-row"
+                  class="editable-row"
+                  shadow="hover"
+                  :body-style="{ padding: '10px' }"
                 >
+                  <!-- Absolute positioned icon wrapper -->
+                  <div class="icon-wrapper">
+                    <template
+                      v-if="!field_config.non_editable.includes(field.split(',')[2])"
+                    >
+                      <el-button
+                        class="edit-btn"
+                        size="mini"
+                        icon="el-icon-edit"
+                        circle
+                        @click="enableInlineEdit(index, field)"
+                      ></el-button>
+                    </template>
+                    <template v-else>
+                      <i
+                        class="el-icon-warning"
+                        title="You can't edit this field"
+                      ></i>
+                    </template>
+                  </div>
+
                   <!-- Label -->
-                  <div class="status-label">
+                  <div class="status-label fw-color-smoke-300">
                     {{field.split(',')[2]==="default_requester"?"Requester":field.split(',')[1].trim()}}:
                   </div>
 
-                  <!-- Value or Edit Mode -->
-                  <div class="status-value">
+                  <!-- Value -->
+                  <div class="status-value fw-color-elephant-800 fw-type-bold">
                     <template v-if="editIndex !== index">
                       <span>{{ handleFieldData(field) || 'N/A' }}</span>
                     </template>
@@ -68,7 +95,7 @@
                         @input="saveInlineEdit(field)"
                         :clearable="false"
                         :searchable="true"
-                        :placeholder="'select'"
+                        placeholder="select"
                         append-to-body
                       />
                     </template>
@@ -82,7 +109,6 @@
                         class="inline-editor"
                         format="yyyy-MM-dd"
                         value-format="yyyy-MM-dd"
-                        style="max-width: 130px"
                       />
                     </template>
 
@@ -96,78 +122,113 @@
                       />
                     </template>
                   </div>
+                </el-card>
 
-                  <!-- Edit Icon -->
-                  <div
-                    v-if="!field_config.non_editable.includes(field.split(',')[2])"
-                    class="edit-icon"
-                  >
-                    <el-button
-                      size="mini"
-                      icon="el-icon-edit"
-                      circle
-                      @click="enableInlineEdit(index, field)"
-                    ></el-button>
+                <el-card
+                  class="editable-row"
+                  shadow="hover"
+                  :body-style="{ padding: '10px' }"
+                >
+                  <div class="icon-wrapper">
+                    <template>
+                      <i
+                        class="el-icon-warning"
+                        title="You can't edit this field"
+                      ></i>
+                    </template>
                   </div>
-                </div>
 
-                <!-- <div v-for="field in ticketIparamFields" class="row">
-                  <div class="status-label">
-                    {{field.split(',')[2]==="default_requester"?"Requester":field.split(',')[1].trim()}}:
-                  </div>
-                  <div class="status-value">
-                    {{handleFieldData(field)||"N/A"}}
-                  </div>
-                  <div class="edit-icon">
-                    <el-button
-                      size="mini"
-                      icon="el-icon-edit"
-                      circle
-                    ></el-button>
-                  </div>
-                </div> -->
-                <div class="row">
-                  <p class="status-label">Due:</p>
-                  <p class="status-value">{{ticketData.due_by | date}}</p>
-                </div>
+                  <p class="status-label fw-color-smoke-300">Due:</p>
+                  <p class="status-value fw-color-elephant-800 fw-type-bold">
+                    {{ticketData.due_by | date}}
+                  </p>
+                </el-card>
               </div>
-
-              <!-- <div class="col">
-                <div class="row">
-                  <p class="status-label">Type:</p>
-                  <p class="status-value">{{ticketData.type || 'N/A'}}</p>
-                </div>
-                <div class="row">
-                  <p class="status-label">Priority:</p>
-                  <p class="status-value">{{showPriority()}}</p>
-                </div>
-                <div class="row">
-                  <p class="status-label">Due:</p>
-                  <p class="status-value">{{ticketData.due_by | date}}</p>
-                </div>
-              </div>
-              <div class="col">
-                <div class="row">
-                  <p class="status-label">Status:</p>
-                  <p class="status-value">{{status || 'N/A'}}</p>
-                </div>
-                <div class="row">
-                  <p class="status-label">Group:</p>
-                  <p class="status-value">{{ticketData.group_id || 'N/A'}}</p>
-                </div>
-                <div class="row">
-                  <p class="status-label">Assignee:</p>
-                  <p class="status-value">{{agentName}}</p>
-                </div>
-              </div> -->
             </div>
           </div>
-          <div class="container-fluid">
-            <div class="section">
+          <div class="container-fluid fw-mt-8">
+            <!-- <div class="section">
               <p class="section-header">Description</p>
               <p class="description" v-html="ticketData.description"></p>
-            </div>
-            <div class="section">
+            </div> -->
+            <el-collapse accordion>
+              <el-collapse-item name="1">
+                <template slot="title">
+                  <i class="el-icon-message fw-type-h3"></i>
+                  <span class="fw-type-h3 fw-ml-16">Description</span>
+                </template>
+                <p class="description" v-html="ticketData.description"></p>
+              </el-collapse-item>
+              <el-collapse-item name="2">
+                <template slot="title">
+                  <i class="el-icon-paperclip fw-type-h3"></i>
+                  <span class="fw-type-h3 fw-ml-16">Attachments</span>
+                </template>
+                <div>
+                  <span
+                    v-if="ticketData.attachments.length > 0"
+                    v-for="item in ticketData.attachments"
+                  >
+                    <a :href="item.attachment_url">{{item.name}}</a>
+                  </span>
+                  <span v-if="ticketData.attachments.length==0">N/A</span>
+                </div>
+              </el-collapse-item>
+              <el-collapse-item name="3">
+                <template slot="title">
+                  <i class="el-icon-chat-line-round fw-type-h3"></i>
+                  <span class="fw-type-h3 fw-ml-16">Conversations</span>
+                </template>
+                <div
+                  class="converstions"
+                  v-if="ticketData.conversations.length > 0"
+                  v-for="conversation in ticketData.conversations"
+                >
+                  <div class="conv-header">
+                    <div><i class="el-icon-view private-note icon"></i></div>
+                    <div style="padding: 0 10px">
+                      <p class="conv-user" v-if="!conversation.incoming">
+                        {{getAgentNameFromList(conversation.user_id)}}
+                      </p>
+                      <p class="conv-user" v-else>
+                        {{conversation.from_email}}
+                      </p>
+                      <p
+                        v-if="conversation.private && conversation.source == 2"
+                      >
+                        Added a private note<span v-if="conversation.incoming"
+                          >, Notified to:
+                          <b>{{conversation.to_emails.join(",")}}</b></span
+                        >
+                      </p>
+                      <p
+                        v-if="!conversation.private && conversation.source == 2"
+                      >
+                        Added a Public note
+                      </p>
+                      <p v-if="conversation.source == 8">
+                        forwarded to <b>{{conversation.to_emails.join(",")}}</b>
+                      </p>
+                      <p v-if="conversation.source == 0">
+                        replied to <b>{{conversation.to_emails.join(",")}}</b>
+                      </p>
+                      <br />
+                      <p><b>On</b> {{conversation.updated_at | date }}</p>
+                    </div>
+                  </div>
+                  <div class="conv-msg">
+                    <p v-html="conversation.body"></p>
+                  </div>
+                </div>
+                <div
+                  style="padding: 5px 10px"
+                  v-if="ticketData.conversations.length == 0"
+                >
+                  N/A
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+            <!-- <div class="section">
               <p class="section-header">Attachments</p>
               <div class="attachment-container">
                 <span
@@ -178,8 +239,8 @@
                 </span>
                 <span v-if="ticketData.attachments.length==0">N/A</span>
               </div>
-            </div>
-            <div class="section">
+            </div> -->
+            <!-- <div class="section">
               <p class="section-header">Conversations</p>
               <div
                 class="converstions"
@@ -222,7 +283,7 @@
               >
                 N/A
               </div>
-            </div>
+            </div> -->
             <div class="section">
               <el-button
                 icon="el-icon-s-promotion"
@@ -550,6 +611,7 @@
             },
 
             saveInlineEdit(field) {
+              if (!this.editValue) return;
               this.updateFieldValue(field, this.editValue);
               this.editIndex = null;
               this.editValue = null;

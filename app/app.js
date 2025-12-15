@@ -5,8 +5,8 @@
       TicketCard,
     },
     data: {
-      currentPage: 1,
-      disablePagination: false,
+      // currentPage: 1,
+      // disablePagination: false,
       isDragging: false,
       onlyMyIssues: false,
       recentlyUpdated: false,
@@ -392,6 +392,13 @@
           }
         }
       },
+      closeAllLoading() {
+        for (element of this.ticketFields) {
+          if (element.showInBoard) {
+            this.closeLoading(element.key);
+          }
+        }
+      },
       async getAllTickets() {
         this.searchInput = "";
         this.tickets = [];
@@ -412,12 +419,12 @@
               } else if (this.tickets[index]?.length === tickets.total)
                 this.hasMore[index] = false;
               // this.disableScroll[index] = true;
-
+              this.storeInsessionStorage();
               this.ticketBak = this.tickets;
             }
             this.closeLoading(element.key);
           }
-          this.disablePagination = false;
+          // this.disablePagination = false;
         }
       },
 
@@ -701,10 +708,8 @@
       },
       async loadMore(index, value) {
         try {
-          console.log("Loading more for column:", index, value);
           this.isLoadingMore[index] = true;
           const { tickets, error } = await this.fetchTickets(value, index);
-          console.log(tickets);
           if (!error) {
             const current = Array.isArray(this.tickets[index])
               ? this.tickets[index]
@@ -797,26 +802,26 @@
             }));
       },
 
-      _handlepreviousPage() {
-        if (this.currentPage > 1) {
-          this.currentPage--;
-        }
-        this.disablePagination = true;
-        this.showAllLoading();
-        this.getAllTickets();
-      },
+      // _handlepreviousPage() {
+      //   if (this.currentPage > 1) {
+      //     this.currentPage--;
+      //   }
+      //   this.disablePagination = true;
+      //   this.showAllLoading();
+      //   this.getAllTickets();
+      // },
 
-      _handleNextPage() {
-        if (this.currentPage >= 1) {
-          this.currentPage++;
-        }
-        this.disablePagination = true;
-        this.showAllLoading();
-        this.getAllTickets();
-      },
+      // _handleNextPage() {
+      //   if (this.currentPage >= 1) {
+      //     this.currentPage++;
+      //   }
+      //   this.disablePagination = true;
+      //   this.showAllLoading();
+      //   this.getAllTickets();
+      // },
 
       _handleRefresh() {
-        this.currentPage = 1;
+        //  this.currentPage = 1;
         this.showAllLoading();
         this.getAllTickets();
       },
@@ -862,7 +867,11 @@
       },
 
       _filterSelectedAgents() {
-        this.buildFilters();
+        const tickets = this.getSessionStorage();
+        // console.log(this.filters);
+
+        if (tickets && tickets.length > 0) this.filterBySessionData(tickets);
+        else this.buildFilters();
       },
 
       _filterSelectedGroups() {
@@ -981,6 +990,21 @@
           console.error(error);
         }
       },
+      storeInsessionStorage() {
+        try {
+          sessionStorage.setItem("tickets", JSON.stringify(this.tickets));
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      getSessionStorage() {
+        try {
+          const tickets = sessionStorage.getItem("tickets");
+          if (tickets) return JSON.parse(tickets);
+        } catch (error) {
+          console.error(error);
+        }
+      },
       buildFilters() {
         let queryParams = [];
 
@@ -1020,7 +1044,6 @@
             queryParams.push(`(${groupParams.join(" OR ")})`);
           }
         }
-        console.log(this.filters);
         // Handle all other dynamic fields
         this.dropdownFields.forEach((field) => {
           // Skip agent_id and group_id as they're already handled above
@@ -1053,20 +1076,51 @@
         }
 
         this.showAllLoading();
-
+        console.log(queryParams);
+        this.dbData.filter = this.filters;
+        this.setData();
         if (queryParams.length > 0) {
-          this.dbData.filter = this.filters;
           this.hasFilter = true;
-          this.currentPage = 1;
+          // this.currentPage = 1;
           this.defaultFilter = queryParams.join(" AND ");
           this.getAllTickets();
-          this.setData();
         } else {
           this.hasFilter = false;
-          this.currentPage = 1;
+          // this.currentPage = 1;
           this.defaultFilter = "";
           this.getAllTickets();
         }
+      },
+      filterBySessionData(tickets) {
+        console.log(tickets);
+        console.log(this.filters);
+        this.showAllLoading();
+        const filterEntries = Object.entries(this.filters)
+          .filter(
+            ([key, values]) => key !== "defaultFields" && values.length > 0
+          )
+          .map(([key, values]) => [key, new Set(values)]);
+        tickets.forEach((ticketColumn, index) => {
+          const filteredTickets = ticketColumn.filter((ticket) => {
+            for (const [key, valueSet] of filterEntries) {
+              if (
+                !valueSet.has(
+                  ticket[
+                    key === "agent"
+                      ? "responder_id"
+                      : key === "group"
+                      ? "group_id"
+                      : key
+                  ]
+                )
+              )
+                return false;
+            }
+            return true;
+          });
+          this.tickets[index] = filteredTickets;
+        });
+        this.closeAllLoading();
       },
       async handleRemove(name) {
         try {

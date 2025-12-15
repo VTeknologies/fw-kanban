@@ -36,9 +36,12 @@
   display: inline-block !important;
   white-space: nowrap !important;
 }
-.status-value,
+
 .conv-user {
   font-weight: bold;
+}
+.status-value {
+  margin-top: 7px;
 }
 
 .go-to-btn {
@@ -99,19 +102,64 @@
 .ticket-fields-container {
   display: grid;
   grid-template-columns: repeat(2, 2fr); /* 2 columns */
-  gap: 16px; /* space between items */
+  gap: 4px;
   width: 100%;
 }
-.edit-icon {
+.edit-btn {
+  transform: scale(0.75); /* 75% of original size */
+  transform-origin: center;
+  padding: 0;
+}
+/* .edit-icon {
   margin-left: auto;
   margin-right: 20px;
 }
-.editable-row .edit-icon {
+.editable-row .edit-icon,
+.editable-row .delete-icon {
   visibility: hidden;
 }
 
-/* Show edit icon when hovering the row */
-.editable-row:hover .edit-icon {
+.editable-row:hover .edit-icon,
+.editable-row:hover .delete-icon {
+  visibility: visible;
+}
+.delete-icon {
+  cursor: not-allowed !important;
+  margin-top: 3px;
+  margin-left: 5px;
+} */
+/* .delete-icon i {
+  pointer-events: none !important;
+} */
+
+/* Make the card a positioned container */
+.editable-row {
+  position: relative;
+}
+
+/* Icon wrapper at top-right */
+.icon-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+
+  visibility: hidden; /* hide until hover */
+  z-index: 10;
+}
+
+/* Show icon only on hover */
+.editable-row:hover .icon-wrapper {
+  visibility: visible;
+}
+
+/* Style for delete icon */
+.icon-wrapper .el-icon-warning {
+  cursor: not-allowed;
+  font-size: 16px;
+  color: #f56c6c;
+}
+
+.filter-items:hover .remove-icon {
   visibility: visible;
 }
 .my-vselect .vs__dropdown-toggle {

@@ -284,14 +284,14 @@
                 N/A
               </div>
             </div> -->
-            <div class="section">
+            <!-- <div class="section">
               <el-button
                 icon="el-icon-s-promotion"
                 title="Add Reply to Tiket"
                 @click="handleReply"
                 >Reply</el-button
               >
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
@@ -680,32 +680,41 @@
               }
 
               try {
-                const { response, status } =
-                  await this.fdObjectModal.request.invokeTemplate(
-                    "updateTicket",
-                    {
-                      context: {
-                        ticketId: this.ticketId,
-                        agentId: this.agentId,
-                      },
-                      body: JSON.stringify(body),
-                    }
-                  );
+                const { response } = await this.fdObjectModal.request.invoke(
+                  "serverMethod",
+                  {
+                    type: "updateTicket",
+                    ticketId: this.ticketId,
+                    body,
+                    loggedInUser: this.agentId,
+                  }
+                );
+                console.log(response);
 
-                if (status === 200) {
-                  const updated = JSON.parse(response);
-                  console.log(updated);
+                // const { response, status } =
+                //   await this.fdObjectModal.request.invokeTemplate(
+                //     "updateTicket",
+                //     {
+                //       context: {
+                //         ticketId: this.ticketId,
+                //         agentId: this.agentId,
+                //       },
+                //       body: JSON.stringify(body),
+                //     }
+                //   );
+                const { ticket, error } = response.response;
+                if (!error) {
                   this.ticketData = {
                     ...this.ticketData,
-                    ...updated,
+                    ...ticket,
                     custom_fields: {
                       ...this.ticketData.custom_fields,
-                      ...updated.custom_fields,
+                      ...ticket.custom_fields,
                     },
                   };
                   if (type === "default_agent")
                     this.agentName = this.getAgentNameFromList(
-                      updated.responder_id
+                      ticket.responder_id
                     );
 
                   this.$forceUpdate();
@@ -715,6 +724,14 @@
                       message: "Ticket updated",
                     },
                     "success"
+                  );
+                } else {
+                  this.showNotify(
+                    {
+                      title: "Error",
+                      message: "Failed to update ticket",
+                    },
+                    "error"
                   );
                 }
               } catch (error) {

@@ -22,6 +22,14 @@
         "getTicketFieldsForSettings": {},
         "getTicketCompany": {},
         "getTicketRequester": {}
+      },
+      "events": {
+        "onAppInstall": {
+          "handler": "appInstallCallback"
+        }
+      },
+      "functions": {
+        "serverMethod": {}
       }
     }
   },

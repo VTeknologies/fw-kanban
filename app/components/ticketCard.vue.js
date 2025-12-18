@@ -311,16 +311,8 @@ let TicketCard = Vue.component("TicketCard", {
       }
     },
 
-    setQuickActions(isAssignedTOMe) {
+    async setQuickActions(isAssignedTOMe) {
       this.popupVisible = false;
-      // const url =
-      //   "<%= iparam.$domain.url %>/api/channel/v2/tickets/" + this.ticketId;
-      // const headers = {
-      //   Authorization: "Basic <%= encode(iparam.api_key) %>",
-      //   "Content-Type": "application/json",
-      // };
-      // const options = {
-      //   headers,
       const body = {
         status: Number(this.status),
         priority: Number(this.selectedPriority),
@@ -335,29 +327,64 @@ let TicketCard = Vue.component("TicketCard", {
       if (isAssignedTOMe) {
         body.responder_id = this.loggedInUser;
       }
-
-      this.fdObject.request
-        .invokeTemplate("updateTicket", {
-          body: JSON.stringify(body),
-          context: { ticketId: this.ticketId },
-        })
-        .then((data) => {
-          if (data.status == 200) {
-            this.agentId = JSON.parse(data.response).responder_id;
-            this.selectedPriority = JSON.parse(data.response).priority;
-            this.getAgentName();
-            this.showNotify(
-              { message: "Status updated successfully" },
-              "success"
-            );
-          } else {
-            throw data;
+      try {
+        const { response } = await this.fdObject.request.invoke(
+          "serverMethod",
+          {
+            type: "updateTicket",
+            body,
+            ticketId: this.ticketId,
+            loggedInUser: this.loggedInUser,
           }
-        })
-        .catch((error) => {
-          console.error(error);
-          this.showNotify(JSON.parse(error.response).errors[0], "danger");
-        });
+        );
+        console.log(response);
+
+        const { ticket, error } = response.response;
+        console.log(ticket);
+
+        if (!error) {
+          this.showNotify(
+            { message: "Status updated successfully" },
+            "success"
+          );
+
+          this.agentId = ticket.responder_id;
+          this.selectedPriority = ticket.priority;
+          this.getAgentName();
+        } else {
+          this.showNotify(
+            {
+              title: "Error",
+              message: "Failed to update ticket",
+            },
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      // this.fdObject.request
+      //   .invokeTemplate("updateTicket", {
+      //     body: JSON.stringify(body),
+      //     context: { ticketId: this.ticketId },
+      //   })
+      //   .then((data) => {
+      //     if (data.status == 200) {
+      //       this.agentId = JSON.parse(data.response).responder_id;
+      //       this.selectedPriority = JSON.parse(data.response).priority;
+      //       this.getAgentName();
+      //       this.showNotify(
+      //         { message: "Status updated successfully" },
+      //         "success"
+      //       );
+      //     } else {
+      //       throw data;
+      //     }
+      //   })
+      //   .catch((error) => {
+      //     console.error(error);
+      //     this.showNotify(JSON.parse(error.response).errors[0], "danger");
+      //   });
     },
 
     showNotify(message, type) {

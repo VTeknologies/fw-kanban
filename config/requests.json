@@ -5,7 +5,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/agents",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Authorization": "Basic <%= encode(iparam.api_key) %>",
         "Content-Type": "application/json"
       },
       "query": {
@@ -55,7 +55,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/ticket_fields?type=default_status",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Authorization": "Basic <%= encode(iparam.api_key) %>",
         "Content-Type": "application/json"
       }
     }
@@ -66,7 +66,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/ticket_fields?type=default_group",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Authorization": "Basic <%= encode(iparam.api_key) %>",
         "Content-Type": "application/json"
       }
     }
@@ -100,7 +100,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/ticket_fields",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Authorization": "Basic <%= encode(iparam.api_key) %>",
         "Content-Type": "application/json"
       }
     }
@@ -144,7 +144,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/companies/<%= context.companyId %>",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Authorization": "Basic <%= encode(iparam.api_key) %>",
         "Content-Type": "application/json"
       }
     }
@@ -155,7 +155,7 @@
       "host": "<%= iparam.domain %>",
       "path": "/api/v2/contacts/<%= context.requesterId %>",
       "headers": {
-        "Authorization": "Basic <%= encode(iparam.credentials[context.agentId]) %>",
+        "Authorization": "Basic <%= encode(iparam.api_key) %>",
         "Content-Type": "application/json"
       }
     }

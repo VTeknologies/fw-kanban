@@ -143,6 +143,8 @@
             // console.log(data);
             this.iparams = data;
             this.isApiAccessEnabled = data.enable_api_key_access;
+            console.log(this.iparams);
+
             if (this.isApiAccessEnabled)
               this.hasAccess = data.agent_ids.includes(this.loggedInUser);
             else this.hasAccess = true;
@@ -199,7 +201,6 @@
           if (group) {
             this.groupBy = `${group},${fieldObj.selectedChoiceId}`;
           }
-
           this.ticketFieldName = fieldObj.selectedTicketField;
 
           // Backward compatibility check → throws intentionally
@@ -225,7 +226,6 @@
           const hasAnyFilter = Object.keys(filter || {}).some(
             (key) => key !== "defaultFields" && filter[key]?.length > 0
           );
-
           if (this.hasFilter) {
             this.handleOnlyMyTickets();
           } else if (hasAnyFilter) {
@@ -311,8 +311,6 @@
               defaultFilter: this.defaultFilter,
             }
           );
-          console.log(response.response.errors.message);
-
           if (response.response.errors.error) {
             this.showNotify(
               { message: response.response.errors.message },
@@ -321,7 +319,6 @@
             this.closeAllLoading();
             return;
           }
-          //console.log(response);
           this.tickets = [...response.response.allTickets];
           this.ticketBak = [...response.response.allTickets];
           this.pages = response.response.pages;
@@ -483,6 +480,8 @@
       getDataFromModel() {
         this.fdObject.instance.receive((event) => {
           const data = event.helper.getData();
+          console.log(data);
+
           if (data.message.fromModel) {
             this.fdObject.interface.trigger("click", {
               id: "ticket",
@@ -633,7 +632,8 @@
       },
       async loadMore(index, value) {
         try {
-          this.isLoadingMore[index] = true;
+          this.$set(this.isLoadingMore, index, true);
+          console.log(this.isLoadingMore);
           const { response } = await this.fdObject.request.invoke(
             "serverMethod",
             {
@@ -664,7 +664,7 @@
         } catch (error) {
           console.error(error);
         } finally {
-          this.isLoadingMore[index] = false;
+          this.$set(this.isLoadingMore, index, false);
         }
       },
       loadMoreWrapper() {
@@ -858,63 +858,147 @@
       // _handleSortBy() {
       //   console.log("Hello");
       // },
-      async _handleGroupBy(name) {
-        this.showAllLoading();
-        const fieldId = Number(name.split(",")[1]);
-        name = name.split(",")[0];
+      // async _handleGroupBy(name) {
+      //   const fieldId = Number(name.split(",")[1]);
+      //   name = name.split(",")[0];
 
+      //   try {
+      //     const existsObj = this.dbData.field_data.find(
+      //       (x) => x.selectedTicketField === name
+      //     );
+
+      //     if (existsObj) {
+      //       this.ticketFields = [
+      //         ...existsObj.selectedChoice.map((elm) => {
+      //           elm.showInBoard = true;
+      //           return elm;
+      //         }),
+      //         ...existsObj.hiddenChoice.map((elm) => {
+      //           elm.showInBoard = false;
+      //           return elm;
+      //         }),
+      //       ];
+
+      //       this.ticketFieldName = name;
+      //       this.dbData.group = name;
+      //       this.showAllLoading();
+      //       await this.setData();
+      //       await this.getAllTickets();
+      //       return;
+      //     }
+      //     const fieldObj = this.dropdownFields.find((x) => x.name === name);
+      //     if (!fieldObj?.choices) return [];
+      //     const choices = fieldObj.choices;
+      //     this.ticketFieldName =
+      //       fieldObj.name === "group" ? "group_id" : fieldObj.name;
+      //     // Convert object or array to dropdown format
+      //     const formatted = Array.isArray(choices)
+      //       ? choices.map((c) => ({ key: c, showInBoard: true, value: c }))
+      //       : Object.keys(choices).map((key) => ({
+      //           key: choices[key][0] || key,
+      //           showInBoard: true,
+      //           value: Array.isArray(choices[key]) ? key : choices[key],
+      //         }));
+      //     this.ticketFields = [...formatted];
+      //     this.dbData.field_data = [
+      //       {
+      //         selectedTicketField: name,
+      //         selectedChoiceId: fieldId,
+      //         selectedChoice: formatted,
+      //         hiddenChoice: [],
+      //       },
+      //       ...this.dbData.field_data,
+      //     ];
+      //     this.dbData.group = name;
+      //     this.showAllLoading();
+      //     await this.setData();
+      //     await this.getAllTickets();
+      //   } catch (error) {
+      //     console.error(error);
+      //   }
+      // },
+      async _handleGroupBy(value) {
         try {
-          const existsObj = this.dbData.field_data.find(
-            (x) => x.selectedTicketField === name
+          const [name, fieldIdStr] = value.split(",");
+          const fieldId = Number(fieldIdStr);
+
+          // Find existing field & move it to top
+          const existingIndex = this.dbData.field_data?.findIndex(
+            (item) => item.selectedTicketField === name
           );
 
+          let existsObj = null;
+
+          if (existingIndex !== -1) {
+            [existsObj] = this.dbData.field_data.splice(existingIndex, 1);
+            this.dbData.field_data.unshift(existsObj);
+          }
+
+          // If field already exists
           if (existsObj) {
             this.ticketFields = [
-              ...existsObj.selectedChoice.map((elm) => {
-                elm.showInBoard = true;
-                return elm;
-              }),
-              ...existsObj.hiddenChoice.map((elm) => {
-                elm.showInBoard = false;
-                return elm;
-              }),
+              ...existsObj.selectedChoice.map((elm) => ({
+                ...elm,
+                showInBoard: true,
+              })),
+              ...existsObj.hiddenChoice.map((elm) => ({
+                ...elm,
+                showInBoard: false,
+              })),
             ];
+
             this.ticketFieldName = name;
             this.dbData.group = name;
+
+            this.showAllLoading();
             await this.setData();
             await this.getAllTickets();
             return;
           }
-          const fieldObj = this.dropdownFields.find((x) => x.name === name);
+
+          // New field selection
+          const fieldObj = this.dropdownFields.find(
+            (field) => field.name === name
+          );
           if (!fieldObj?.choices) return [];
-          const choices = fieldObj.choices;
+
+          const { choices } = fieldObj;
+
           this.ticketFieldName =
             fieldObj.name === "group" ? "group_id" : fieldObj.name;
+
           // Convert object or array to dropdown format
           const formatted = Array.isArray(choices)
-            ? choices.map((c) => ({ key: c, showInBoard: true, value: c }))
+            ? choices.map((choice) => ({
+                key: choice,
+                value: choice,
+                showInBoard: true,
+              }))
             : Object.keys(choices).map((key) => ({
                 key: choices[key][0] || key,
-                showInBoard: true,
                 value: Array.isArray(choices[key]) ? key : choices[key],
+                showInBoard: true,
               }));
+
           this.ticketFields = [...formatted];
-          this.dbData.field_data = [
-            ...this.dbData.field_data,
-            {
-              selectedTicketField: name,
-              selectedChoiceId: fieldId,
-              selectedChoice: formatted,
-              hiddenChoice: [],
-            },
-          ];
+
+          this.dbData.field_data.unshift({
+            selectedTicketField: name,
+            selectedChoiceId: fieldId,
+            selectedChoice: formatted,
+            hiddenChoice: [],
+          });
+
           this.dbData.group = name;
+
+          this.showAllLoading();
           await this.setData();
           await this.getAllTickets();
         } catch (error) {
           console.error(error);
         }
       },
+
       getList() {
         return this.dropdownFields
           .filter(

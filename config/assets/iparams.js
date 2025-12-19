@@ -13,6 +13,7 @@ document.onreadystatechange = async () => {
     $("#validate-btn").on("click", handleValidation);
     $("#ticket-fields").on("fwChange", handleTicketFields);
     $("#toggle").on("fwChange", handleToggleChange);
+    $("#back-btn").on("click", handleBack);
   }
 };
 
@@ -25,6 +26,15 @@ const showNotification = (type, content) => {
   }
 
   document.querySelector("#type_toast").trigger({ type, content });
+};
+
+const handleBack = () => {
+  if (
+    confirm("Are you sure you want to go back? This will clear all the data.")
+  ) {
+    $("#admin-api-container").show();
+    $("#agent-api-container").hide();
+  }
 };
 
 const handleValidation = async () => {
@@ -44,6 +54,8 @@ const handleValidation = async () => {
     if (/^https/.test(domain.trim())) {
       domain = domain.substring(8);
     } else domain = domain.trim();
+    iparams.domain = domain;
+    iparams.api_key = api_key.trim();
     window.isValid = await getAgents(domain, api_key);
     await getTicketFields();
     if (window.isValid) {

@@ -53,6 +53,11 @@
         id="agent-api-container"
         style="display: none; margin-top: 7rem"
       >
+        <fw-button color="secondary" id="back-btn"
+          ><fw-icon name="arrow-left" slot="before-label" size="12"></fw-icon>
+          Back
+        </fw-button>
+
         <div class="fw-pb-24">
           <span
             ><h3 class="fw-color-elephant-900">
@@ -117,10 +122,17 @@
         //write your code here
         console.log(configs);
 
-        const { domain, api_key, credentials, agent_ids, ticket_fields } =
-          configs;
+        const {
+          domain,
+          api_key,
+          credentials,
+          agent_ids,
+          ticket_fields,
+          enable_api_key_access,
+        } = configs;
         document.getElementsByName("domain")[0].value = domain;
         document.getElementsByName("api_key")[0].value = api_key;
+        document.getElementById("toggle").checked = enable_api_key_access;
         iparams = configs;
         $("#agent-api-container").show();
         $("#admin-api-container").hide();

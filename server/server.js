@@ -96,13 +96,16 @@ const fetchTickets = async (value, index, pages, args) => {
     );
     // console.log(filter);
     // console.log(args.iparams);
+    const apiKey = args.iparams.enable_api_key_access
+      ? args.iparams.credentials[args.loggedInUser]
+      : args.iparams.api_key;
 
     const { response, status, headers } = await $request.invokeTemplate(
       "getAllTickets",
       {
         context: {
           filter: filter + pageOptions,
-          apiKey: args.iparams.credentials[args.loggedInUser],
+          apiKey,
         },
       }
     );
@@ -153,10 +156,13 @@ const getTickets = (tickets, value, args) => {
 
 const updateTicket = async (ticketId, body, args) => {
   try {
+    const apiKey = args.iparams.enable_api_key_access
+      ? args.iparams.credentials[args.loggedInUser]
+      : args.iparams.api_key;
     const { response, status } = await $request.invokeTemplate("updateTicket", {
       context: {
         ticketId,
-        apiKey: args.iparams.credentials[args.loggedInUser],
+        apiKey,
       },
       body: JSON.stringify(body),
     });

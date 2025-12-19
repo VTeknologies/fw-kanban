@@ -356,7 +356,7 @@
             isHidden: true,
             choiceLimit: 25,
             hiddenLimit: 2,
-            dbData: {},
+            dpData: {},
           },
 
           methods: {
@@ -409,10 +409,9 @@
 
             getFieldValues() {
               this.showLoading();
+
               this.fdObject.request
-                .invokeTemplate("getTicketFields", {
-                  context: { agentId: this.loggedInUser },
-                })
+                .invokeTemplate("getTicketFields", {})
                 .then((data) => {
                   if (data.status == 200) {
                     let response = JSON.parse(data.response);
@@ -442,18 +441,19 @@
                     });
                     this.getData()
                       .then((data) => {
+                        console.log(data);
                         if (!data.field_data) {
-                          this.dbData.field_data = [data];
-                        } else this.dbData = { ...data };
+                          this.dpData.field_data = [data];
+                        } else this.dpData = { ...data };
                         this.selectedTicketField =
-                          this.dbData.field_data[0].selectedTicketField;
+                          this.dpData.field_data[0].selectedTicketField;
                         this.selectedChoiceId =
-                          this.dbData.field_data[0].selectedChoiceId;
+                          this.dpData.field_data[0].selectedChoiceId;
                         this._handleChange();
                         this.selectedChoice =
-                          this.dbData.field_data[0].selectedChoice || [];
+                          this.dpData.field_data[0].selectedChoice || [];
                         this.hiddenChoice =
-                          this.dbData.field_data[0].hiddenChoice || [];
+                          this.dpData.field_data[0].hiddenChoice || [];
                         this.choices = this.choices.filter((x) => {
                           return (
                             !this.selectedChoice.some(
@@ -480,11 +480,20 @@
             },
 
             async _handleChange() {
-              const dbData = await this.getData();
-              const existingField = dbData.field_data.find(
-                (f) => f.selectedChoiceId === this.selectedChoiceId
-              );
+              try {
+                const dpData = await this.getData();
 
+                const existingField = dpData?.field_data.find(
+                  (f) => f.selectedChoiceId === this.selectedChoiceId
+                );
+
+                this.handleChoices(existingField);
+              } catch (error) {
+                console.error(error);
+                this.handleChoices(null);
+              }
+            },
+            handleChoices(existingField) {
               let selected = this.dpValues.filter((value) => {
                 return value.id === this.selectedChoiceId;
               });
@@ -513,7 +522,10 @@
                   selected[0].type !== "default_status" &&
                   selected[0].type !== "default_priority"
                 ) {
-                  keyValue.unshift({ key: "UnAssigned", value: "Unassigned" });
+                  keyValue.unshift({
+                    key: "UnAssigned",
+                    value: "Unassigned",
+                  });
                 }
                 this.selectedTicketField = this.getTicketFieldFromType(
                   selected[0].type,
@@ -554,7 +566,6 @@
                 this.isHidden = false;
               }
             },
-
             getTicketFieldFromType(type, name) {
               let ticketField = "";
               switch (type) {
@@ -607,41 +618,107 @@
               this.hiddenChoice = [];
             },
 
+            // setData() {
+            //   if (!this.dpData.field_data) this.dpData.field_data = [];
+            //   const isExit = this.dpData.field_data.findIndex(
+            //     (f) => f.selectedChoiceId === this.selectedChoiceId
+            //   );
+            //   if (isExit > -1) {
+            //     this.dpData.field_data.splice(isExit, 1);
+            //   }
+            //   this.dpData.field_data.unshift({
+            //     selectedChoice: this.selectedChoice,
+            //     hiddenChoice: this.hiddenChoice || [],
+            //     selectedTicketField: this.selectedTicketField,
+            //     selectedChoiceId: this.selectedChoiceId,
+            //   });
+            //   this.fdObject.db
+            //     .set(`ticket-fields-${this.loggedInUser}`, {
+            //       field_data: this.dpData.field_data,
+            //       group: "",
+            //       filter: {},
+            //     })
+            //     .then(
+            //       (data) => {
+            //         this.showNotify(
+            //           { message: "Saved successfully" },
+            //           "success"
+            //         );
+            //         this.fdObject.instance.send({
+            //           message: {
+            //             fromModel: false,
+            //           },
+            //         });
+            //         this.fdObject.instance.close();
+            //       },
+            //       (error) => {
+            //         console.log(error);
+            //         this.showNotify(error, "error");
+            //       }
+            //     );
+            // },
             setData() {
-              this.dbData.field_data.push({
-                selectedChoice: this.selectedChoice,
-                hiddenChoice: this.hiddenChoice || [],
-                selectedTicketField: this.selectedTicketField,
-                selectedChoiceId: this.selectedChoiceId,
-              });
-              this.fdObject.db
-                .set(`ticket-fields-${this.loggedInUser}`, {
-                  field_data: this.dbData.field_data,
-                  group: "",
-                  filter: {},
-                })
-                .then(
-                  (data) => {
+              try {
+                if (!Array.isArray(this.dpData.field_data)) {
+                  this.dpData.field_data = [];
+                }
+
+                const fieldData = this.dpData.field_data;
+                for (let i = 0; i < fieldData.length; i++) {
+                  if (fieldData[i].selectedChoiceId === this.selectedChoiceId) {
+                    fieldData.splice(i, 1);
+                    break;
+                  }
+                }
+
+                fieldData.unshift({
+                  selectedChoice: this.selectedChoice,
+                  hiddenChoice: Array.isArray(this.hiddenChoice)
+                    ? this.hiddenChoice
+                    : [],
+                  selectedTicketField: this.selectedTicketField,
+                  selectedChoiceId: this.selectedChoiceId,
+                });
+
+                this.fdObject.db
+                  .set(`ticket-fields-${this.loggedInUser}`, {
+                    field_data: fieldData,
+                    group: "",
+                    filter: {},
+                  })
+                  .then(() => {
                     this.showNotify(
                       { message: "Saved successfully" },
                       "success"
                     );
-                    this.fdObject.instance.send({
-                      message: {
-                        fromModel: false,
-                      },
-                    });
-                    this.fdObject.instance.close();
-                  },
-                  (error) => {
-                    console.log(error);
-                    this.showNotify(error, "error");
-                  }
-                );
-            },
 
-            getData() {
-              return this.fdObject.db.get(`ticket-fields-${this.loggedInUser}`);
+                    this.fdObject.instance.send({
+                      message: { fromModel: false },
+                    });
+
+                    this.fdObject.instance.close();
+                  })
+                  .catch((error) => {
+                    console.error("DB Save Failed:", error);
+                    this.showNotify(error, "error");
+                  });
+              } catch (error) {
+                console.error("setData execution failed:", error);
+                this.showNotify(
+                  { message: "Something went wrong while saving data" },
+                  "error"
+                );
+              }
+            },
+            async getData() {
+              try {
+                return this.fdObject.db.get(
+                  `ticket-fields-${this.loggedInUser}`
+                );
+              } catch (error) {
+                console.error(error);
+                return null;
+              }
             },
 
             removeAt(index) {

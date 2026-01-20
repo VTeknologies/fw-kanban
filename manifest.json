@@ -1,12 +1,17 @@
 {
-  "platform-version": "2.3",
-  "product": {
-    "freshdesk": {
-      "location": {
-        "full_page_app": {
-          "url": "template.html",
-          "icon": "icon.svg"
-        }
+  "platform-version": "3.0",
+  "engines": {
+    "node": "18.20.6",
+    "fdk": "9.7.4"
+  },
+  "app": {
+    "tracking_id": "iybe97o9qrv19wzmr02m"
+  },
+  "modules": {
+    "support_ticket": {},
+    "common": {
+      "functions": {
+        "serverMethod": {}
       },
       "requests": {
         "getAgents": {},
@@ -28,16 +33,12 @@
           "handler": "appInstallCallback"
         }
       },
-      "functions": {
-        "serverMethod": {}
+      "location": {
+        "full_page_app": {
+          "url": "template.html",
+          "icon": "icon.svg"
+        }
       }
     }
-  },
-  "engines": {
-    "node": "18.20.6",
-    "fdk": "9.7.4"
-  },
-  "app": {
-    "tracking_id": "iybe97o9qrv19wzmr02m"
   }
 }

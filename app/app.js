@@ -23,6 +23,8 @@
       agentsList: [],
       groupsList: [],
       dbData: {},
+      canAddMoreFields: false,
+      showMoreFilters: false,
       priorityList: [
         {
           id: 1,
@@ -140,11 +142,9 @@
         this.fdObject.iparams
           .get()
           .then((data) => {
-            // console.log(data);
+            //  console.log(data);
             this.iparams = data;
             this.isApiAccessEnabled = data.enable_api_key_access;
-            console.log(this.iparams);
-
             if (this.isApiAccessEnabled)
               this.hasAccess = data.agent_ids.includes(this.loggedInUser);
             else this.hasAccess = true;
@@ -195,6 +195,8 @@
           const data = await this.getSelectedTicketFields();
           this.dbData = data.field_data ? { ...data } : { field_data: [data] };
           const { group, field_data, filter } = this.dbData;
+          console.log(Object.keys(filter));
+
           let fieldObj = group
             ? field_data.find((x) => x.selectedTicketField === group)
             : field_data[0];
@@ -224,12 +226,13 @@
           this.ticketFields = [...selectedChoice, ...hiddenChoice];
 
           const hasAnyFilter = Object.keys(filter || {}).some(
-            (key) => key !== "defaultFields" && filter[key]?.length > 0
+            (key) => key !== "defaultFields" && filter[key]?.length > 0,
           );
+          this.filters =
+            Object.keys(filter).length > 0 ? { ...filter } : this.filters;
           if (this.hasFilter) {
             this.handleOnlyMyTickets();
           } else if (hasAnyFilter) {
-            this.filters = { ...filter };
             this._filterSelectedAgents(undefined, true);
             // this.buildFilters();
           } else {
@@ -246,7 +249,7 @@
                 "getStatusList",
                 {
                   context: { agentId: this.loggedInUser },
-                }
+                },
               );
 
               if (data.status !== 200) throw data;
@@ -277,7 +280,7 @@
                     ? "Invalid API Key / Domain Name"
                     : error.response,
                 },
-                "danger"
+                "danger",
               );
             }
           }
@@ -309,12 +312,12 @@
               ticketFields: this.ticketFields,
               ticketFieldName: this.ticketFieldName,
               defaultFilter: this.defaultFilter,
-            }
+            },
           );
-          if (response.response.errors.error) {
+          if (response.response?.errors?.error) {
             this.showNotify(
               { message: response.response.errors.message },
-              "danger"
+              "danger",
             );
             this.closeAllLoading();
             return;
@@ -371,7 +374,7 @@
           const filter = encodeURI(
             `query="${renamedField}:${
               value !== "Unassigned" ? (isString ? `'${value}'` : value) : null
-            }${defaultFilter}"`
+            }${defaultFilter}"`,
           );
           // console.log(filter);
 
@@ -395,12 +398,12 @@
           if (error.status == 400 || error.status == 404) {
             this.showNotify(
               { message: "Invalid API Key / Domain Name" },
-              "danger"
+              "danger",
             );
           } else if (error.status == 429) {
             this.showNotify(
               { message: "Too many requests. Please try again later." },
-              "danger"
+              "danger",
             );
           } else {
             this.showNotify({ message: error.response }, "danger");
@@ -427,7 +430,7 @@
             ];
             this.allTicketFields = JSON.parse(response);
             this.dropdownFields = this.allTicketFields.filter((x) =>
-              fieldTypes.includes(x.type)
+              fieldTypes.includes(x.type),
             );
           }
         } catch (error) {
@@ -528,7 +531,7 @@
           if (error.status === 400 || error.status === 404) {
             this.showNotify(
               { message: "Invalid API Key / Domain Name" },
-              "danger"
+              "danger",
             );
           } else {
             this.showNotify({ message: error.response }, "danger");
@@ -570,7 +573,7 @@
             if (error.status == 400 || error.status == 404) {
               this.showNotify(
                 { message: "Invalid API Key / Domain Name" },
-                "danger"
+                "danger",
               );
             } else {
               this.showNotify({ message: error.response }, "danger");
@@ -595,7 +598,7 @@
             if (error.status == 400 || error.status == 404) {
               this.showNotify(
                 { message: "Invalid API Key / Domain Name" },
-                "danger"
+                "danger",
               );
             } else {
               this.showNotify({ message: error.response }, "danger");
@@ -645,7 +648,7 @@
               value: value,
               pages: this.pages,
               index,
-            }
+            },
           );
           console.log(response);
           const { tickets, error } = response.response;
@@ -704,7 +707,7 @@
               ticketId: id,
               loggedInUser: this.loggedInUser,
               body,
-            }
+            },
           );
           const { error } = response.response;
           if (!error) {
@@ -712,7 +715,7 @@
               {
                 message: "Status updated",
               },
-              "success"
+              "success",
             );
           } else {
             this.showNotify({ message: "Failed to update ticket" }, "danger");
@@ -921,14 +924,11 @@
         try {
           const [name, fieldIdStr] = value.split(",");
           const fieldId = Number(fieldIdStr);
-
           // Find existing field & move it to top
           const existingIndex = this.dbData.field_data?.findIndex(
-            (item) => item.selectedTicketField === name
+            (item) => item.selectedTicketField === name,
           );
-
           let existsObj = null;
-
           if (existingIndex !== -1) {
             [existsObj] = this.dbData.field_data.splice(existingIndex, 1);
             this.dbData.field_data.unshift(existsObj);
@@ -958,7 +958,7 @@
 
           // New field selection
           const fieldObj = this.dropdownFields.find(
-            (field) => field.name === name
+            (field) => field.name === name,
           );
           if (!fieldObj?.choices) return [];
 
@@ -1007,7 +1007,7 @@
               x.choices &&
               (Array.isArray(x.choices)
                 ? x.choices.length
-                : Object.keys(x.choices).length) <= 25
+                : Object.keys(x.choices).length) <= 25,
           )
           .map((x) => ({
             label: x.label,
@@ -1029,7 +1029,7 @@
               (x) =>
                 x.type === "custom_date" ||
                 x.type === "custom_number" ||
-                x.type === "custom_decimal"
+                x.type === "custom_decimal",
             )
             .map((x) => ({ value: x.name, label: x.label })),
         ];
@@ -1092,7 +1092,7 @@
           const updatedTickets = [];
           const filterEntries = Object.entries(this.filters)
             .filter(
-              ([key, values]) => key !== "defaultFields" && values.length > 0
+              ([key, values]) => key !== "defaultFields" && values.length > 0,
             )
             .map(([key, values]) => [key, new Set(values)]);
           tickets.forEach((ticketColumn) => {
@@ -1104,9 +1104,9 @@
                       key === "agent"
                         ? "responder_id"
                         : key === "group"
-                        ? "group_id"
-                        : key
-                    ]
+                          ? "group_id"
+                          : key
+                    ],
                   )
                 )
                   return false;
@@ -1162,7 +1162,7 @@
         // Combine agent and group with OR between them
         if (agentParams.length > 0 && groupParams.length > 0) {
           queryParams.push(
-            `(${agentParams.join(" OR ")}) OR (${groupParams.join(" OR ")})`
+            `(${agentParams.join(" OR ")}) OR (${groupParams.join(" OR ")})`,
           );
         } else {
           if (agentParams.length > 0) {
@@ -1186,7 +1186,7 @@
             if (Array.isArray(filterValue) && filterValue.length > 0) {
               let fieldParams = filterValue.map(
                 (val) =>
-                  `${field.name === "ticket_type" ? "type" : field.name}:${val}`
+                  `${field.name === "ticket_type" ? "type" : field.name}:${val}`,
               );
               queryParams.push(`(${fieldParams.join(" OR ")})`);
             }
@@ -1212,11 +1212,11 @@
                 message: "You must have at least one filter",
                 title: "Field exceeded",
               },
-              "info"
+              "info",
             );
           else
             this.filters.defaultFields = this.filters.defaultFields.filter(
-              (x) => x.name !== name
+              (x) => x.name !== name,
             );
           delete this.filters[name];
           this.dbData = {
@@ -1225,6 +1225,8 @@
           };
           await this.setData();
           this.buildFilters();
+          if (this.filters.defaultFields.length < 3)
+            this.canAddMoreFields = true;
         } catch (error) {
           console.error(error);
         }
@@ -1236,22 +1238,24 @@
       },
       async addFilterField(field) {
         try {
+          // this.showNotify(
+          //   {
+          //     message:
+          //       "You can select only three filters. Please remove one to add another",
+          //     title: "Field exceeded",
+          //   },
+          //   "info"
+          // );
+          // else {
+          this.filters.defaultFields.push({
+            name: field.name,
+            label: field.label,
+          });
+          await this.setData();
           if (this.filters.defaultFields.length === 3)
-            this.showNotify(
-              {
-                message:
-                  "You can select only three filters. Please remove one to add another",
-                title: "Field exceeded",
-              },
-              "info"
-            );
-          else {
-            this.filters.defaultFields.push({
-              name: field.name,
-              label: field.label,
-            });
-            await this.setData();
-          }
+            this.canAddMoreFields = false;
+          // }
+          this.showMoreFilters = false;
         } catch (error) {
           console.error(error);
         }

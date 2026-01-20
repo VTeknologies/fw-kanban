@@ -1,0 +1,183 @@
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Load highlight.js CSS before Diff2Html CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/github.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css"
+    />
+    <style>
+      :root {
+        --background-color: #f6f8fa;
+        --text-color: #000;
+        --sidebar-background: #fff;
+        --sidebar-border: #e1e4e8;
+        --sidebar-active-background: #f1f8ff;
+        --sidebar-active-border: #0366d6;
+        --container-background: #fff;
+        --container-border: #e1e4e8;
+        --container-shadow: rgba(27, 31, 35, 0.12);
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 20px;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .migrationContainer {
+        display: flex;
+        gap: 20px;
+      }
+
+      .sidebar {
+        background-color: var(--sidebar-background);
+        padding: 20px;
+        width: 20vw;
+        border: 1px solid var(--sidebar-border);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px var(--container-shadow),
+          0 8px 24px var(--container-shadow);
+      }
+
+      .sidebar-content {
+        padding: 10px;
+        position: sticky;
+        top: 0;
+      }
+
+      .sideContainer {
+        flex: 1;
+        padding: 20px;
+        background-color: var(--container-background);
+        border: 1px solid var(--container-border);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px var(--container-shadow),
+          0 8px 24px var(--container-shadow);
+        margin-bottom: 20px;
+      }
+
+      h1,
+      h2 {
+        margin: 0 0 20px;
+        padding: 0;
+      }
+
+      #file-options {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      #file-options li {
+        cursor: pointer;
+        padding: 10px 15px;
+        border-bottom: 1px solid var (--sidebar-border);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #file-options li:hover,
+      .active {
+        background-color: var(--sidebar-active-background);
+        border-left: 5px solid var(--sidebar-active-border);
+      }
+
+      .diff-container-wrapper {
+        width: 72vw;
+      }
+
+      input[type='checkbox'] {
+        cursor: pointer;
+      }
+    </style>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"
+    ></script>
+  </head>
+
+  <body>
+    <div class="migrationContainer">
+      <div class="sidebar">
+        <div class="sidebar-content">
+          <h2>Migration Report</h2>
+          <p>
+            <strong>App:</strong>
+            <span>kanban-app</span>
+          </p>
+          <p><strong>Current Platform Version:</strong>
+            <span>2.3</p>
+          <p><strong>Target Platform Version:</strong> 
+            <span>3.0</p>
+          <p><strong>Date:</strong> 
+            <span>2026-01-16T09:44:04.952469Z</span>
+          </p>
+          <hr />
+          <p>
+            <strong>Files Modified (<span>1</span>)</strong>
+          </p>
+          <ul id="file-options"></ul>
+        </div>
+      </div>
+      <div class="diff-container-wrapper">
+        <div id="diff-container"></div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const fileOptionsContainer = document.getElementById('file-options');
+        const diffContainer = document.getElementById('diff-container');
+        const filesData = [{"fileName":"manifest.json","filePath":"manifest.json","unifiedDiff":"--- manifest.json\n+++ manifest.json\n@@ -1,19 +1,22 @@\n {\n-  \"platform-version\": \"2.3\",\n-  \"product\": {\n-    \"freshdesk\": {\n-      \"location\": {\n-        \"full_page_app\": {\n-          \"url\": \"template.html\",\n-          \"icon\": \"icon.svg\"\n-        }\n+  \"platform-version\": \"3.0\",\n+  \"engines\": {\n+    \"node\": \"18.20.6\",\n+    \"fdk\": \"9.7.4\"\n+  },\n+  \"app\": {},\n+  \"modules\": {\n+    \"support_ticket\": {},\n+    \"common\": {\n+      \"functions\": {\n+        \"serverMethod\": {}\n       },\n       \"requests\": {\n         \"getAgents\": {},\n         \"validateFd\": {},\n         \"getStatusList\": {},\n         \"getGroupList\": {},\n         \"getAllTickets\": {},\n         \"getAgent\": {},\n         \"getTicketFields\": {},\n         \"updateTicket\": {},\n@@ -21,23 +24,19 @@\n         \"getAgentsListForSettings\": {},\n         \"getTicketFieldsForSettings\": {},\n         \"getTicketCompany\": {},\n         \"getTicketRequester\": {}\n       },\n       \"events\": {\n         \"onAppInstall\": {\n           \"handler\": \"appInstallCallback\"\n         }\n       },\n-      \"functions\": {\n-        \"serverMethod\": {}\n+      \"location\": {\n+        \"full_page_app\": {\n+          \"url\": \"template.html\",\n+          \"icon\": \"icon.svg\"\n+        }\n       }\n     }\n-  },\n-  \"engines\": {\n-    \"node\": \"18.20.6\",\n-    \"fdk\": \"9.7.4\"\n-  },\n-  \"app\": {\n-    \"tracking_id\": \"iybe97o9qrv19wzmr02m\"\n   }\n }"}];
+
+
+        function initializeFileOptions() {
+          filesData.forEach(function (file, index) {
+            const option = document.createElement('li');
+            option.textContent = file.filePath;
+            option.setAttribute('title', file.filePath)
+            option.addEventListener('click', function () {
+              const target = document.getElementById(`file-${index}`);
+              target.scrollIntoView({ behavior: 'smooth' });
+            });
+            fileOptionsContainer.appendChild(option);
+          });
+        }
+
+        function updateDivs() {
+          filesData.forEach((file, index) => {
+            const diffInput = file.unifiedDiff;
+            const container = document.createElement('div');
+            container.id = `file-${index}`;
+            container.classList.add('sideContainer');
+
+            const diff2htmlUi = new Diff2HtmlUI(container, diffInput, {
+              drawFileList: false,
+              matching: 'lines',
+              outputFormat: 'side-by-side',
+              synchronisedScroll: true,
+              highlight: true,
+            });
+
+            diff2htmlUi.draw();
+            diff2htmlUi.highlightCode();
+            diffContainer.appendChild(container);
+          });
+        }
+
+        initializeFileOptions();
+        updateDivs();
+      });
+    </script>
+  </body>
+</html>

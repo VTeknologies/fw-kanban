@@ -44,7 +44,7 @@ const handleValidation = async () => {
   if (!domain || domain.trim() === "" || !api_key || api_key.trim() === "") {
     showNotification(
       "error",
-      "Domain and API Key are required cannot be empty.",
+      "Domain and API Key are required cannot be empty."
     );
     return false;
   }
@@ -61,7 +61,7 @@ const handleValidation = async () => {
     if (window.isValid) {
       showNotification(
         "success",
-        "Successfully verified Freshdesk credentials.",
+        "Successfully verified Freshdesk credentials."
       );
       $("#admin-api-container").hide();
       $("#agent-api-container").show();
@@ -87,8 +87,10 @@ const validateFdCredentials = async (domain, api_key, isTrue) => {
           domain: domain,
           api_key: api_key,
         },
-      },
+      }
     );
+    console.log(JSON.parse(response));
+
     if (status === 200) {
       showNotification("success", "Credentials are validated successfully.");
       return true;
@@ -111,7 +113,7 @@ const getAgents = async (domain, api_key, page = 1) => {
           api_key: api_key,
           page,
         },
-      },
+      }
     );
     agents = [...agents, ...JSON.parse(response)];
     if (status === 200) {
@@ -137,6 +139,8 @@ function createDDLForAgents(id) {
   const row = document.createElement("div");
   row.className = "fw-flex fw-p-8 fw-gap-4 row-enter";
   row.id = `row-${rowId}`;
+  console.log(rowId);
+
   row.innerHTML = `
       <div style="width: 110px;">
         <fw-pill id="verified-${rowId}" color=${id ? "green" : "red"}>
@@ -185,7 +189,7 @@ function createDDLForAgents(id) {
   listOptions.options = popoverActions;
 
   listOptions.addEventListener("fwChange", (e) =>
-    handleOptionChange(e.target.value, rowId),
+    handleOptionChange(e.target.value, rowId)
   );
 
   const button = document.getElementById(`btn-${rowId}`);
@@ -215,7 +219,7 @@ const handleVerifyBtn = async (rowId) => {
     if (!select.value || !input.value) {
       showNotification(
         "error",
-        "Please select the agent and enter API key. Both are required",
+        "Please select the agent and enter API key. Both are required"
       );
       return;
     }
@@ -224,7 +228,7 @@ const handleVerifyBtn = async (rowId) => {
     const isValid = await validateFdCredentials(
       iparams.domain,
       input.value.trim(),
-      true,
+      true
     );
     if (isValid) {
       handlePhillElement("green", rowId);
@@ -263,6 +267,7 @@ const handleDelete = (rowId) => {
   }
   if (!row) return;
   row.remove();
+  console.log(iparams);
 };
 
 const handlePhillElement = (color, rowId) => {
@@ -273,7 +278,7 @@ const handlePhillElement = (color, rowId) => {
   const icon = document.createElement("fw-icon");
   icon.setAttribute(
     "name",
-    color === "green" ? "circle-check" : "circle-cross",
+    color === "green" ? "circle-check" : "circle-cross"
   );
   icon.setAttribute("slot", "icon");
   phillMessage.appendChild(icon);
@@ -294,11 +299,13 @@ const getTicketFields = async (values) => {
           domain: iparams.domain,
           api_key: iparams.api_key,
         },
-      },
+      }
     );
     if (status === 200) {
       const select = document.getElementById("ticket-fields");
       const data = JSON.parse(response);
+      console.log(data);
+
       const skipTypes = [
         "nested_field",
         "default_subject",
@@ -326,6 +333,8 @@ const handleTicketFields = (e) => {
 };
 
 const handleToggleChange = (e) => {
+  console.log(e.target.checked);
+
   iparams["enable_api_key_access"] = e.target.checked;
   if (e.target.checked) $("#wrapper").show();
   else $("#wrapper").hide();

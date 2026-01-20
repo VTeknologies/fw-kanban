@@ -1,16 +1,9 @@
 exports = {
-  // args is a JSON block containing the payload information.
-  // args['iparam'] will contain the installation parameter values.
-
-  appInstallCallback: function (args) {
-    console.info("onAppInstallHandler invoked with following data: \n", args);
+  appInstallCallback: function () {
     renderData();
   },
   serverMethod: async function (args) {
     try {
-      // console.info("serverMethod invoked with following data: \n", args);
-      console.log(args);
-
       let data;
       if (args.type === "getAllTickets") {
         data = await fetchAllTickets(args);
@@ -44,7 +37,7 @@ const fetchAllTickets = async (args) => {
               element.value,
               index,
               pages,
-              args
+              args,
             );
             if (!error) {
               allTickets.push(getTickets(tickets.results, element.value, args));
@@ -53,19 +46,13 @@ const fetchAllTickets = async (args) => {
                 pages[index]++;
               } else if (allTickets[index]?.length === tickets.total)
                 hasMore[index] = false;
-              // this.disableScroll[index] = true;
-              // this.storeInsessionStorage();
-              // this.ticketBak = this.tickets;
             } else {
               errors = { error, message };
             }
-            // this.closeLoading(element.key);
           }
         } catch (error) {
           console.error(error);
         }
-
-        // this.disablePagination = false;
       }
       return { allTickets, pages, hasMore, errors };
     }
@@ -82,20 +69,18 @@ const fetchTickets = async (value, index, pages, args) => {
       args.ticketFieldName === "responder_id"
         ? "agent_id"
         : args.ticketFieldName === "group"
-        ? "group_id"
-        : args.ticketFieldName;
+          ? "group_id"
+          : args.ticketFieldName;
     const defaultFilter =
       args.defaultFilter !== "" ? ` AND ${args.defaultFilter}` : "";
-    // Filter for custom field ad type will be string, so checking and adding the same
+    // Filter for custom field and type will be string, so checking and adding the same
     const isString =
       args.ticketFieldName.startsWith("cf_") || args.ticketFieldName === "type";
     const filter = encodeURI(
       `query="${renamedField}:${
         value !== "Unassigned" ? (isString ? `'${value}'` : value) : null
-      }${defaultFilter}"`
+      }${defaultFilter}"`,
     );
-    // console.log(filter);
-    // console.log(args.iparams);
     const apiKey = args.iparams.enable_api_key_access
       ? args.iparams.credentials[args.loggedInUser]
       : args.iparams.api_key;
@@ -107,7 +92,7 @@ const fetchTickets = async (value, index, pages, args) => {
           filter: filter + pageOptions,
           apiKey,
         },
-      }
+      },
     );
     if (status === 200) {
       const tickets = JSON.parse(response);

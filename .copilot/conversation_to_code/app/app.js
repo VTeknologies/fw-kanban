@@ -5,8 +5,8 @@
       TicketCard,
     },
     data: {
-      currentPage: 1,
-      disablePagination: false,
+      // currentPage: 1,
+      // disablePagination: false,
       isDragging: false,
       onlyMyIssues: false,
       recentlyUpdated: false,
@@ -23,6 +23,8 @@
       agentsList: [],
       groupsList: [],
       dbData: {},
+      canAddMoreFields: false,
+      showMoreFilters: false,
       priorityList: [
         {
           id: 1,
@@ -63,7 +65,10 @@
       pages: {},
       hasMore: {},
       isLoadingMore: {},
-
+      sortBy: {
+        field: "",
+        order: "",
+      },
       // debouncedLoadMore: null,
       iparams: {},
       groupBy: null,
@@ -137,7 +142,7 @@
         this.fdObject.iparams
           .get()
           .then((data) => {
-            console.log(data);
+            // console.log(data);
             this.iparams = data;
             this.isApiAccessEnabled = data.enable_api_key_access;
             if (this.isApiAccessEnabled)
@@ -185,109 +190,6 @@
         return this.fdObject.db.get("ticket-fields-" + this.loggedInUser);
       },
 
-      // TODO: we need to store the filters and get the filters and show it here.
-      // getTicketFieldsOptions() {
-      //   this.getSelectedTicketFields()
-      //     .then((data) => {
-      //       let fieldObj = {};
-      //       if (!data.field_data) {
-      //         this.dbData.field_data = [data];
-      //       } else this.dbData = { ...data };
-
-      //       if (this.dbData.group) {
-      //         fieldObj = this.dbData.field_data.find(
-      //           (x) => x.selectedTicketField === this.dbData.group
-      //         );
-      //         this.groupBy = `${this.dbData.group},${fieldObj.selectedChoiceId}`;
-      //       } else fieldObj = this.dbData.field_data[0];
-      //       this.ticketFieldName = fieldObj.selectedTicketField;
-      //       console.log(this.dbData);
-
-      //       // this wil throw to catch block if source/product seleted already in previous versions (for backward compatabality)
-      //       if (
-      //         this.ticketFieldName === "source" ||
-      //         this.ticketFieldName === "product_id"
-      //       ) {
-      //         throw { status: 404 };
-      //       }
-
-      //       let selectedChoice = fieldObj.selectedChoice.map((elm) => {
-      //         elm.showInBoard = true;
-      //         return elm;
-      //       });
-
-      //       let dataHidden = fieldObj.hiddenChoice || [];
-      //       let hiddenChoice = dataHidden.map((elm) => {
-      //         elm.showInBoard = false;
-      //         return elm;
-      //       });
-
-      //       this.ticketFields = [...selectedChoice, ...hiddenChoice];
-      //       let isFilter = false;
-      //       for (let key in this.dbData.filter) {
-      //         if (
-      //           key !== "defaultFields" &&
-      //           this.dbData.filter[key].length > 0
-      //         ) {
-      //           isFilter = true;
-      //           break;
-      //         }
-      //       }
-
-      //       if (this.hasFilter) {
-      //         this.handleOnlyMyTickets();
-      //       } else if (isFilter) {
-      //         this.filters = { ...this.dbData.filter };
-      //         this.buildFilters();
-      //       } else {
-      //         this.showAllLoading();
-      //         this.getAllTickets();
-      //       }
-      //     })
-      //     .catch((err) => {
-      //       console.error(err);
-      //       if (err.status === 404) {
-      //         this.fdObject.request
-      //           .invokeTemplate("getStatusList", {
-      //             context: { agentId: this.loggedInUser },
-      //           })
-      //           .then((data) => {
-      //             if (data.status == 200) {
-      //               let choice = JSON.parse(data.response)[0].choices;
-      //               let keyValue = [];
-      //               for (let key in choice) {
-      //                 keyValue.push({
-      //                   key: choice[key][0],
-      //                   value: key.toString(),
-      //                   showInBoard: true,
-      //                 });
-      //               }
-      //               this.ticketFieldName = "status";
-      //               this.ticketFields = keyValue;
-      //               if (this.hasFilter) {
-      //                 this.handleOnlyMyTickets();
-      //               } else {
-      //                 this.showAllLoading();
-      //                 this.getAllTickets();
-      //               }
-      //             } else {
-      //               throw data;
-      //             }
-      //           })
-      //           .catch((error) => {
-      //             console.log(error);
-      //             if (error.status == 400 || error.status == 404) {
-      //               this.showNotify(
-      //                 { message: "Invalid API Key / Domain Name" },
-      //                 "danger"
-      //               );
-      //             } else {
-      //               this.showNotify({ message: error.response }, "danger");
-      //             }
-      //           });
-      //       }
-      //     });
-      // },
       async getTicketFieldsOptions() {
         try {
           const data = await this.getSelectedTicketFields();
@@ -299,7 +201,6 @@
           if (group) {
             this.groupBy = `${group},${fieldObj.selectedChoiceId}`;
           }
-
           this.ticketFieldName = fieldObj.selectedTicketField;
 
           // Backward compatibility check → throws intentionally
@@ -325,12 +226,12 @@
           const hasAnyFilter = Object.keys(filter || {}).some(
             (key) => key !== "defaultFields" && filter[key]?.length > 0
           );
-
+          this.filters = { ...filter };
           if (this.hasFilter) {
             this.handleOnlyMyTickets();
           } else if (hasAnyFilter) {
-            this.filters = { ...filter };
-            this.buildFilters();
+            this._filterSelectedAgents(undefined, true);
+            // this.buildFilters();
           } else {
             this.showAllLoading();
             this.getAllTickets();
@@ -389,35 +290,71 @@
           }
         }
       },
-      async getAllTickets() {
-        this.searchInput = "";
-        this.tickets = [];
-        for (const [index, element] of this.ticketFields.entries()) {
+      closeAllLoading() {
+        for (element of this.ticketFields) {
           if (element.showInBoard) {
-            this.pages[index] = 1;
-            const { tickets, error } = await this.fetchTickets(
-              element.value,
-              index
-            );
-            if (!error) {
-              this.tickets.push(
-                this.getTickets(tickets.results, element.value)
-              );
-              if (this.tickets[index].length < tickets.total) {
-                this.hasMore[index] = true;
-                this.pages[index]++;
-              } else if (this.tickets[index]?.length === tickets.total)
-                this.hasMore[index] = false;
-              // this.disableScroll[index] = true;
-
-              this.ticketBak = this.tickets;
-            }
             this.closeLoading(element.key);
           }
-          this.disablePagination = false;
         }
       },
+      async getAllTickets() {
+        try {
+          this.searchInput = "";
+          this.tickets = [];
+          const { response } = await this.fdObject.request.invoke(
+            "serverMethod",
+            {
+              type: "getAllTickets",
+              loggedInUser: this.loggedInUser,
+              ticketFields: this.ticketFields,
+              ticketFieldName: this.ticketFieldName,
+              defaultFilter: this.defaultFilter,
+            }
+          );
+          if (response.response.errors.error) {
+            this.showNotify(
+              { message: response.response.errors.message },
+              "danger"
+            );
+            this.closeAllLoading();
+            return;
+          }
+          this.tickets = [...response.response.allTickets];
+          this.ticketBak = [...response.response.allTickets];
+          this.pages = response.response.pages;
+          this.hasMore = response.response.hasMore;
 
+          this.closeAllLoading();
+        } catch (error) {
+          console.error(error);
+        }
+
+        // for (const [index, element] of this.ticketFields.entries()) {
+        //   if (element.showInBoard) {
+        //     this.pages[index] = 1;
+        //     const { tickets, error } = await this.fetchTickets(
+        //       element.value,
+        //       index
+        //     );
+        //     if (!error) {
+        //       this.tickets.push(
+        //         this.getTickets(tickets.results, element.value)
+        //       );
+        //       if (this.tickets[index].length < tickets.total) {
+        //         this.hasMore[index] = true;
+        //         this.pages[index]++;
+        //       } else if (this.tickets[index]?.length === tickets.total)
+        //         this.hasMore[index] = false;
+        //       // this.disableScroll[index] = true;
+        //       this.storeInsessionStorage();
+        //       this.ticketBak = this.tickets;
+        //     }
+        //     this.closeLoading(element.key);
+        //   }
+        //   // this.disablePagination = false;
+        // }
+        // return this.tickets;
+      },
       async fetchTickets(value, index) {
         try {
           const pageOptions = `&page=${this.pages[index]}`;
@@ -436,17 +373,14 @@
               value !== "Unassigned" ? (isString ? `'${value}'` : value) : null
             }${defaultFilter}"`
           );
-          const context = { filter: filter + pageOptions };
-          if (this.isApiAccessEnabled)
-            context.params = "<%= encode(iparam.api_key) %>";
-          else {
-            context.params =
-              "<%= encode(iparam.credentials[context.agentId]) %>";
-            context.agentId = this.loggedInUser;
-          }
+          // console.log(filter);
+
           const { response, status, headers } =
             await this.fdObject.request.invokeTemplate("getAllTickets", {
-              context,
+              context: {
+                filter: filter + pageOptions,
+                agentId: this.loggedInUser,
+              },
             });
           if (status === 200) {
             const tickets = JSON.parse(response);
@@ -471,10 +405,10 @@
           } else {
             this.showNotify({ message: error.response }, "danger");
           }
+          return {
+            error: true,
+          };
         }
-        return {
-          error: true,
-        };
       },
       async getTicketFields() {
         try {
@@ -546,6 +480,8 @@
       getDataFromModel() {
         this.fdObject.instance.receive((event) => {
           const data = event.helper.getData();
+          console.log(data);
+
           if (data.message.fromModel) {
             this.fdObject.interface.trigger("click", {
               id: "ticket",
@@ -684,6 +620,7 @@
           message: message.message,
         });
       },
+
       debounce(fn, delay = 300) {
         let timeout;
         return function (...args) {
@@ -695,10 +632,24 @@
       },
       async loadMore(index, value) {
         try {
-          console.log("Loading more for column:", index, value);
-          this.isLoadingMore[index] = true;
-          const { tickets, error } = await this.fetchTickets(value, index);
-          console.log(tickets);
+          this.$set(this.isLoadingMore, index, true);
+          console.log(this.isLoadingMore);
+          const { response } = await this.fdObject.request.invoke(
+            "serverMethod",
+            {
+              type: "loadMoreTickets",
+              loggedInUser: this.loggedInUser,
+              ticketFieldName: this.ticketFieldName,
+              defaultFilter: this.defaultFilter,
+              ticketFields: this.ticketFields,
+              value: value,
+              pages: this.pages,
+              index,
+            }
+          );
+          console.log(response);
+          const { tickets, error } = response.response;
+          // const { tickets, error } = await this.fetchTickets(value, index);
           if (!error) {
             const current = Array.isArray(this.tickets[index])
               ? this.tickets[index]
@@ -713,7 +664,7 @@
         } catch (error) {
           console.error(error);
         } finally {
-          this.isLoadingMore[index] = false;
+          this.$set(this.isLoadingMore, index, false);
         }
       },
       loadMoreWrapper() {
@@ -728,7 +679,7 @@
         this.loadMore(index, value);
       },
 
-      changeTicketFieldStatus(id, status) {
+      async changeTicketFieldStatus(id, status) {
         // const url = "<%= iparam.$domain.url %>/api/channel/v2/tickets/" + id;
         // const headers = {
         //   Authorization: "Basic <%= encode(iparam.api_key) %>",
@@ -745,28 +696,53 @@
         //   headers: headers,
         //   body: JSON.stringify(body),
         // };
-
-        this.fdObject.request
-          .invokeTemplate("updateTicket", {
-            context: { ticketId: id, agentId: this.loggedInUser },
-            body: JSON.stringify(body),
-          })
-          .then((data) => {
-            if (data.status == 200) {
-              this.showNotify(
-                {
-                  message: "Status updated",
-                },
-                "success"
-              );
-            } else {
-              throw data;
+        try {
+          const { response } = await this.fdObject.request.invoke(
+            "serverMethod",
+            {
+              type: "updateTicket",
+              ticketId: id,
+              loggedInUser: this.loggedInUser,
+              body,
             }
-          })
-          .catch((error) => {
-            console.log(error);
-            this.showNotify({ message: error.response }, "danger");
-          });
+          );
+          const { error } = response.response;
+          if (!error) {
+            this.showNotify(
+              {
+                message: "Status updated",
+              },
+              "success"
+            );
+          } else {
+            this.showNotify({ message: "Failed to update ticket" }, "danger");
+          }
+        } catch (error) {
+          console.error(error);
+          this.showNotify({ message: error.response }, "danger");
+        }
+
+        // this.fdObject.request
+        //   .invokeTemplate("updateTicket", {
+        //     context: { ticketId: id, agentId: this.loggedInUser },
+        //     body: JSON.stringify(body),
+        //   })
+        //   .then((data) => {
+        //     if (data.status == 200) {
+        //       this.showNotify(
+        //         {
+        //           message: "Status updated",
+        //         },
+        //         "success"
+        //       );
+        //     } else {
+        //       throw data;
+        //     }
+        //   })
+        //   .catch((error) => {
+        //     console.log(error);
+        //     this.showNotify({ message: error.response }, "danger");
+        //   });
       },
       getOptions(name) {
         if (name === "agent") {
@@ -791,26 +767,26 @@
             }));
       },
 
-      _handlepreviousPage() {
-        if (this.currentPage > 1) {
-          this.currentPage--;
-        }
-        this.disablePagination = true;
-        this.showAllLoading();
-        this.getAllTickets();
-      },
+      // _handlepreviousPage() {
+      //   if (this.currentPage > 1) {
+      //     this.currentPage--;
+      //   }
+      //   this.disablePagination = true;
+      //   this.showAllLoading();
+      //   this.getAllTickets();
+      // },
 
-      _handleNextPage() {
-        if (this.currentPage >= 1) {
-          this.currentPage++;
-        }
-        this.disablePagination = true;
-        this.showAllLoading();
-        this.getAllTickets();
-      },
+      // _handleNextPage() {
+      //   if (this.currentPage >= 1) {
+      //     this.currentPage++;
+      //   }
+      //   this.disablePagination = true;
+      //   this.showAllLoading();
+      //   this.getAllTickets();
+      // },
 
       _handleRefresh() {
-        this.currentPage = 1;
+        //  this.currentPage = 1;
         this.showAllLoading();
         this.getAllTickets();
       },
@@ -855,8 +831,21 @@
         this.buildFilters();
       },
 
-      _filterSelectedAgents() {
-        this.buildFilters();
+      async _filterSelectedAgents(value, isTrue) {
+        try {
+          let tickets = [];
+          console.log(isTrue);
+          if (isTrue) {
+            this.showAllLoading();
+            tickets = await this.getAllTickets();
+          } else tickets = this.getSessionStorage();
+          console.log(tickets);
+          if (tickets && tickets.length > 0)
+            this.filterBySessionData(tickets, isTrue);
+          else this.buildFilters();
+        } catch (error) {
+          console.error(error);
+        }
       },
 
       _filterSelectedGroups() {
@@ -866,62 +855,150 @@
       _filterSelectedPriority() {
         this.buildFilters();
       },
-      async _handleGroupBy(name) {
-        const fieldId = Number(name.split(",")[1]);
-        name = name.split(",")[0];
+      // _handleSortBy() {
+      //   console.log("Hello");
+      // },
+      // async _handleGroupBy(name) {
+      //   const fieldId = Number(name.split(",")[1]);
+      //   name = name.split(",")[0];
 
+      //   try {
+      //     const existsObj = this.dbData.field_data.find(
+      //       (x) => x.selectedTicketField === name
+      //     );
+
+      //     if (existsObj) {
+      //       this.ticketFields = [
+      //         ...existsObj.selectedChoice.map((elm) => {
+      //           elm.showInBoard = true;
+      //           return elm;
+      //         }),
+      //         ...existsObj.hiddenChoice.map((elm) => {
+      //           elm.showInBoard = false;
+      //           return elm;
+      //         }),
+      //       ];
+
+      //       this.ticketFieldName = name;
+      //       this.dbData.group = name;
+      //       this.showAllLoading();
+      //       await this.setData();
+      //       await this.getAllTickets();
+      //       return;
+      //     }
+      //     const fieldObj = this.dropdownFields.find((x) => x.name === name);
+      //     if (!fieldObj?.choices) return [];
+      //     const choices = fieldObj.choices;
+      //     this.ticketFieldName =
+      //       fieldObj.name === "group" ? "group_id" : fieldObj.name;
+      //     // Convert object or array to dropdown format
+      //     const formatted = Array.isArray(choices)
+      //       ? choices.map((c) => ({ key: c, showInBoard: true, value: c }))
+      //       : Object.keys(choices).map((key) => ({
+      //           key: choices[key][0] || key,
+      //           showInBoard: true,
+      //           value: Array.isArray(choices[key]) ? key : choices[key],
+      //         }));
+      //     this.ticketFields = [...formatted];
+      //     this.dbData.field_data = [
+      //       {
+      //         selectedTicketField: name,
+      //         selectedChoiceId: fieldId,
+      //         selectedChoice: formatted,
+      //         hiddenChoice: [],
+      //       },
+      //       ...this.dbData.field_data,
+      //     ];
+      //     this.dbData.group = name;
+      //     this.showAllLoading();
+      //     await this.setData();
+      //     await this.getAllTickets();
+      //   } catch (error) {
+      //     console.error(error);
+      //   }
+      // },
+      async _handleGroupBy(value) {
         try {
-          const existsObj = this.dbData.field_data.find(
-            (x) => x.selectedTicketField === name
+          const [name, fieldIdStr] = value.split(",");
+          const fieldId = Number(fieldIdStr);
+
+          // Find existing field & move it to top
+          const existingIndex = this.dbData.field_data?.findIndex(
+            (item) => item.selectedTicketField === name
           );
 
+          let existsObj = null;
+
+          if (existingIndex !== -1) {
+            [existsObj] = this.dbData.field_data.splice(existingIndex, 1);
+            this.dbData.field_data.unshift(existsObj);
+          }
+
+          // If field already exists
           if (existsObj) {
             this.ticketFields = [
-              ...existsObj.selectedChoice.map((elm) => {
-                elm.showInBoard = true;
-                return elm;
-              }),
-              ...existsObj.hiddenChoice.map((elm) => {
-                elm.showInBoard = false;
-                return elm;
-              }),
+              ...existsObj.selectedChoice.map((elm) => ({
+                ...elm,
+                showInBoard: true,
+              })),
+              ...existsObj.hiddenChoice.map((elm) => ({
+                ...elm,
+                showInBoard: false,
+              })),
             ];
+
             this.ticketFieldName = name;
             this.dbData.group = name;
+
+            this.showAllLoading();
             await this.setData();
             await this.getAllTickets();
             return;
           }
-          const fieldObj = this.dropdownFields.find((x) => x.name === name);
+
+          // New field selection
+          const fieldObj = this.dropdownFields.find(
+            (field) => field.name === name
+          );
           if (!fieldObj?.choices) return [];
-          const choices = fieldObj.choices;
+
+          const { choices } = fieldObj;
+
           this.ticketFieldName =
             fieldObj.name === "group" ? "group_id" : fieldObj.name;
+
           // Convert object or array to dropdown format
           const formatted = Array.isArray(choices)
-            ? choices.map((c) => ({ key: c, showInBoard: true, value: c }))
+            ? choices.map((choice) => ({
+                key: choice,
+                value: choice,
+                showInBoard: true,
+              }))
             : Object.keys(choices).map((key) => ({
                 key: choices[key][0] || key,
-                showInBoard: true,
                 value: Array.isArray(choices[key]) ? key : choices[key],
+                showInBoard: true,
               }));
+
           this.ticketFields = [...formatted];
-          this.dbData.field_data = [
-            ...this.dbData.field_data,
-            {
-              selectedTicketField: name,
-              selectedChoiceId: fieldId,
-              selectedChoice: formatted,
-              hiddenChoice: [],
-            },
-          ];
+
+          this.dbData.field_data.unshift({
+            selectedTicketField: name,
+            selectedChoiceId: fieldId,
+            selectedChoice: formatted,
+            hiddenChoice: [],
+          });
+
           this.dbData.group = name;
+
+          this.showAllLoading();
           await this.setData();
           await this.getAllTickets();
         } catch (error) {
           console.error(error);
         }
       },
+
       getList() {
         return this.dropdownFields
           .filter(
@@ -937,6 +1014,30 @@
             value: `${x.name},${x.id}`,
           }));
       },
+      getNumberList() {
+        let list = [
+          { value: "due_by", label: "Due By" },
+          { value: "created_at", label: "Created At" },
+          { value: "updated_at", label: "Updated At" },
+          { value: "due_by", label: "Due Date" },
+        ];
+
+        list = [
+          ...list,
+          ...this.allTicketFields
+            .filter(
+              (x) =>
+                x.type === "custom_date" ||
+                x.type === "custom_number" ||
+                x.type === "custom_decimal"
+            )
+            .map((x) => ({ value: x.name, label: x.label })),
+        ];
+        return list;
+      },
+      _handleSortByOrder() {
+        console.log("yes");
+      },
       async setData() {
         try {
           await this.fdObject.db.set(`ticket-fields-${this.loggedInUser}`, {
@@ -948,7 +1049,91 @@
           console.error(error);
         }
       },
+      storeInsessionStorage() {
+        try {
+          sessionStorage.setItem("tickets", JSON.stringify(this.tickets));
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      getSessionStorage() {
+        try {
+          const tickets = sessionStorage.getItem("tickets");
+          console.log(tickets);
+
+          if (tickets) return JSON.parse(tickets);
+        } catch (error) {
+          console.error(error);
+        }
+      },
       buildFilters() {
+        const queryParams = this.constructQueryParams();
+
+        this.showAllLoading();
+        this.dbData.filter = this.filters;
+        this.setData();
+        if (queryParams.length > 0) {
+          this.hasFilter = true;
+          // this.currentPage = 1;
+          this.defaultFilter = queryParams.join(" AND ");
+          this.getAllTickets();
+        } else {
+          this.hasFilter = false;
+          // this.currentPage = 1;
+          this.defaultFilter = "";
+          this.getAllTickets();
+        }
+      },
+
+      async filterBySessionData(tickets, isTrue) {
+        try {
+          this.showAllLoading();
+          console.log(this.filters);
+          const updatedTickets = [];
+          const filterEntries = Object.entries(this.filters)
+            .filter(
+              ([key, values]) => key !== "defaultFields" && values.length > 0
+            )
+            .map(([key, values]) => [key, new Set(values)]);
+          tickets.forEach((ticketColumn) => {
+            const filteredTickets = ticketColumn.filter((ticket) => {
+              for (const [key, valueSet] of filterEntries) {
+                if (
+                  !valueSet.has(
+                    ticket[
+                      key === "agent"
+                        ? "responder_id"
+                        : key === "group"
+                        ? "group_id"
+                        : key
+                    ]
+                  )
+                )
+                  return false;
+              }
+              return true;
+            });
+            updatedTickets.push(filteredTickets);
+          });
+          console.log(this.tickets);
+
+          const queryParams = this.constructQueryParams();
+          this.dbData.filter = this.filters;
+          if (!isTrue) await this.setData();
+          this.tickets = updatedTickets;
+          if (queryParams.length > 0) {
+            this.hasFilter = true;
+            this.defaultFilter = queryParams.join(" AND ");
+          } else {
+            this.hasFilter = false;
+            this.defaultFilter = "";
+          }
+          this.closeAllLoading();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      constructQueryParams() {
         let queryParams = [];
 
         // Handle special case for "Only My Issues" if it still exists
@@ -987,7 +1172,6 @@
             queryParams.push(`(${groupParams.join(" OR ")})`);
           }
         }
-        console.log(this.filters);
         // Handle all other dynamic fields
         this.dropdownFields.forEach((field) => {
           // Skip agent_id and group_id as they're already handled above
@@ -1018,22 +1202,7 @@
           let date = new Date();
           queryParams.push(`updated_at:'${this.formatDate(date)}'`);
         }
-
-        this.showAllLoading();
-
-        if (queryParams.length > 0) {
-          this.dbData.filter = this.filters;
-          this.hasFilter = true;
-          this.currentPage = 1;
-          this.defaultFilter = queryParams.join(" AND ");
-          this.getAllTickets();
-          this.setData();
-        } else {
-          this.hasFilter = false;
-          this.currentPage = 1;
-          this.defaultFilter = "";
-          this.getAllTickets();
-        }
+        return queryParams;
       },
       async handleRemove(name) {
         try {
@@ -1056,6 +1225,8 @@
           };
           await this.setData();
           this.buildFilters();
+          if (this.filters.defaultFields.length < 3)
+            this.canAddMoreFields = true;
         } catch (error) {
           console.error(error);
         }
@@ -1067,22 +1238,24 @@
       },
       async addFilterField(field) {
         try {
+          // this.showNotify(
+          //   {
+          //     message:
+          //       "You can select only three filters. Please remove one to add another",
+          //     title: "Field exceeded",
+          //   },
+          //   "info"
+          // );
+          // else {
+          this.filters.defaultFields.push({
+            name: field.name,
+            label: field.label,
+          });
+          await this.setData();
           if (this.filters.defaultFields.length === 3)
-            this.showNotify(
-              {
-                message:
-                  "You can select only three filters. Please remove one to add another",
-                title: "Field exceeded",
-              },
-              "info"
-            );
-          else {
-            this.filters.defaultFields.push({
-              name: field.name,
-              label: field.label,
-            });
-            await this.setData();
-          }
+            this.canAddMoreFields = false;
+          // }
+          this.showMoreFilters = false;
         } catch (error) {
           console.error(error);
         }

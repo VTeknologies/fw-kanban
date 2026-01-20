@@ -61,7 +61,7 @@
         <div class="fw-pb-24">
           <span
             ><h3 class="fw-color-elephant-900">
-              Configure Ticket Fields
+              Select the fields shown in the ticket details view
             </h3></span
           >
           <span
@@ -78,7 +78,7 @@
           </div>
         </div>
         <div class="fw-flex fw-items-center fw-gap-4 fw-mb-4">
-          <h5>Enable API key based access</h5>
+          <h5>Restrict access using user API keys</h5>
           <fw-toggle class="fw-mt-2" id="toggle" size="small"></fw-toggle>
         </div>
         <div
@@ -94,7 +94,8 @@
             >
             <span
               ><p class="fw-color-smoke-300">
-                This setup helps to load the tickets based on Agent's scope
+                Tickets are shown based on each user’s API key and permissions.
+                Users without a configured key won’t see the app.
               </p></span
             >
             <div style="text-align: center">
@@ -120,8 +121,6 @@
     <script type="text/javascript">
       async function getConfigs(configs) {
         //write your code here
-        console.log(configs);
-
         const {
           domain,
           api_key,
@@ -135,7 +134,6 @@
         document.getElementById("toggle").checked = enable_api_key_access;
         iparams = configs;
         $("#agent-api-container").show();
-        $("#admin-api-container").hide();
 
         await getAgents(domain, api_key);
         await getTicketFields(ticket_fields);
@@ -143,6 +141,8 @@
           createDDLForAgents(id);
         });
         window.isValid = true;
+        if (enable_api_key_access) $("#admin-api-container").hide();
+
         $("#spinner").hide();
       }
 
@@ -153,8 +153,6 @@
 
       function postConfigs() {
         //write your code here
-        console.log(iparams);
-
         return {
           _meta: {
             secure: ["api_key", "crendentials"],

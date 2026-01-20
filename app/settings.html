@@ -173,7 +173,10 @@
         <div class="row">
           <div class="col-md-12">
             <div class="form-group">
-              <label for="ticketFields">List of Ticket Fields</label>
+              <label for="ticketFields"
+                >List of Ticket Fields (only fields with 25 values or lower are
+                listed)</label
+              >
               <el-select
                 id="ticketFields"
                 v-model="selectedChoiceId"
@@ -368,8 +371,11 @@
                   this.getParamsFrmParent();
                 })
                 .catch((error) => {
-                  console.log(error);
-                  this.showNotify(error, "error");
+                  console.error(error);
+                  this.showNotify(
+                    { message: error.response, title: "Error" },
+                    "error",
+                  );
                 });
             },
 
@@ -441,7 +447,6 @@
                     });
                     this.getData()
                       .then((data) => {
-                        console.log(data);
                         if (!data.field_data) {
                           this.dpData.field_data = [data];
                         } else this.dpData = { ...data };
@@ -457,16 +462,16 @@
                         this.choices = this.choices.filter((x) => {
                           return (
                             !this.selectedChoice.some(
-                              (t) => t.value == x.value
+                              (t) => t.value == x.value,
                             ) &&
                             !this.hiddenChoice.some((r) => r.value == x.value)
                           );
                         });
-                        this.closeLoading();
                       })
                       .catch((err) => {
                         console.error(err);
-
+                      })
+                      .finally(() => {
                         this.closeLoading();
                       });
                   } else {
@@ -474,8 +479,14 @@
                   }
                 })
                 .catch((error) => {
-                  console.log(error);
-                  this.showNotify(error, "error");
+                  console.error(error);
+                  this.showNotify(
+                    { message: error.response, title: "Error" },
+                    "Error",
+                  );
+                })
+                .finally(() => {
+                  this.closeLoading();
                 });
             },
 
@@ -484,7 +495,7 @@
                 const dpData = await this.getData();
 
                 const existingField = dpData?.field_data.find(
-                  (f) => f.selectedChoiceId === this.selectedChoiceId
+                  (f) => f.selectedChoiceId === this.selectedChoiceId,
                 );
 
                 this.handleChoices(existingField);
@@ -529,7 +540,7 @@
                 }
                 this.selectedTicketField = this.getTicketFieldFromType(
                   selected[0].type,
-                  selected[0].name
+                  selected[0].name,
                 );
                 if (existingField) {
                   this.selectedChoiceId = existingField.selectedChoiceId;
@@ -537,23 +548,9 @@
                     ...existingField.selectedChoice,
                     ...existingField.hiddenChoice,
                   ];
-                  // if (
-                  //   existingField.type !== "default_status" &&
-                  //   existingField.type !== "default_priority"
-                  // ) {
-                  //   allChoices.push({ key: "UnAssigned", value: "Unassigned" });
-                  // }
-                  // allChoices = [
-                  //   ...allChoices,
-                  //   ...existingField.selectedChoice,
-                  //   ...existingField.hiddenChoice,
-                  // ];
                   this.choices = keyValue.filter((x) => {
                     return !allChoices.some((t) => t.value == x.value);
                   });
-                  // console.log(keyValue);
-
-                  // console.log(allChoices);
 
                   this.selectedChoice = existingField.selectedChoice || [];
                   this.hiddenChoice = existingField.hiddenChoice || [];
@@ -598,7 +595,7 @@
                 } else {
                   this.showNotify(
                     { message: "Please select any of the available fields" },
-                    "error"
+                    "error",
                   );
                 }
               }
@@ -617,46 +614,6 @@
               this.choices = [...this.choices, ...this.hiddenChoice];
               this.hiddenChoice = [];
             },
-
-            // setData() {
-            //   if (!this.dpData.field_data) this.dpData.field_data = [];
-            //   const isExit = this.dpData.field_data.findIndex(
-            //     (f) => f.selectedChoiceId === this.selectedChoiceId
-            //   );
-            //   if (isExit > -1) {
-            //     this.dpData.field_data.splice(isExit, 1);
-            //   }
-            //   this.dpData.field_data.unshift({
-            //     selectedChoice: this.selectedChoice,
-            //     hiddenChoice: this.hiddenChoice || [],
-            //     selectedTicketField: this.selectedTicketField,
-            //     selectedChoiceId: this.selectedChoiceId,
-            //   });
-            //   this.fdObject.db
-            //     .set(`ticket-fields-${this.loggedInUser}`, {
-            //       field_data: this.dpData.field_data,
-            //       group: "",
-            //       filter: {},
-            //     })
-            //     .then(
-            //       (data) => {
-            //         this.showNotify(
-            //           { message: "Saved successfully" },
-            //           "success"
-            //         );
-            //         this.fdObject.instance.send({
-            //           message: {
-            //             fromModel: false,
-            //           },
-            //         });
-            //         this.fdObject.instance.close();
-            //       },
-            //       (error) => {
-            //         console.log(error);
-            //         this.showNotify(error, "error");
-            //       }
-            //     );
-            // },
             setData() {
               try {
                 if (!Array.isArray(this.dpData.field_data)) {
@@ -689,7 +646,7 @@
                   .then(() => {
                     this.showNotify(
                       { message: "Saved successfully" },
-                      "success"
+                      "success",
                     );
 
                     this.fdObject.instance.send({
@@ -706,14 +663,14 @@
                 console.error("setData execution failed:", error);
                 this.showNotify(
                   { message: "Something went wrong while saving data" },
-                  "error"
+                  "error",
                 );
               }
             },
             async getData() {
               try {
                 return this.fdObject.db.get(
-                  `ticket-fields-${this.loggedInUser}`
+                  `ticket-fields-${this.loggedInUser}`,
                 );
               } catch (error) {
                 console.error(error);

@@ -112,6 +112,7 @@
                             title="Add More Filters"
                             width="200"
                             trigger="click"
+                            v-model="showMoreFilters"
                           >
                             <div id="field-item-container">
                               <div
@@ -123,7 +124,12 @@
                                 {{field.label}}
                               </div>
                             </div>
-                            <el-button slot="reference" type="info"
+                            <el-button
+                              size="mini"
+                              slot="reference"
+                              type="primary"
+                              v-show="canAddMoreFields"
+                              plain
                               >Add More</el-button
                             >
                           </el-popover>
@@ -131,6 +137,7 @@
                       </div>
                     </div>
                   </div>
+
                   <span
                     class="btn btn-default"
                     title="Filter"
@@ -428,9 +435,9 @@
         </div>
         <div v-else class="container-fluid">
           <el-empty
-            image="./handshake.jpg"
+            image="./lock.jpg"
             image-size="300"
-            description="Please provide your API key in settings page to get started"
+            description="Access to this app hasn’t been set up for you. Please contact your admin to enable access"
           ></el-empty>
         </div>
       </div>

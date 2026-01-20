@@ -1,0 +1,46 @@
+
+      --------------------------------------
+      Error Stack:: "Error: spawnSync C:\\WINDOWS\\system32\\cmd.exe ETIMEDOUT\n    at Object.spawnSync (node:internal/child_process:1120:20)\n    at spawnSync (node:child_process:935:24)\n    at c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:239025\n    at new Promise (<anonymous>)\n    at l.spawnSync (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:238972)\n    at a.FdkHelper.runInBackground (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:254528)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at a.FdkHelper.getFdkVersion (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:249940)\n    at v.getFdkVersion (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:321001)\n    at v.resolveWebviewView (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:295461)\n    at uX.$resolveWebviewView (file:///c:/Users/aroki/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:213:93558)"
+      Error Message:: "spawnSync C:\\WINDOWS\\system32\\cmd.exe ETIMEDOUT"
+      Error Name:: "Error"
+      
+      
+      
+      
+      
+      
+
+      Timestamp:: Fri, 16 Jan 2026 09:42:19 GMT
+      Extension Version:: 2.8.0
+      --------------------------------------
+    
+      --------------------------------------
+      Error Stack:: "Error: spawnSync C:\\WINDOWS\\system32\\cmd.exe ETIMEDOUT\n    at Object.spawnSync (node:internal/child_process:1120:20)\n    at spawnSync (node:child_process:935:24)\n    at c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:239025\n    at new Promise (<anonymous>)\n    at l.spawnSync (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:238972)\n    at a.FdkHelper.runInBackground (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:254528)\n    at a.FdkHelper.runFdkValidate (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:251049)\n    at a.FdkHelper.runWithConfig (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:255278)\n    at a.FdkHelper.checkAndRunFdkValidate (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:250946)\n    at a.FdkHelper.validateApp (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:250262)\n    at v.migrateApp (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:285495)"
+      Error Message:: "spawnSync C:\\WINDOWS\\system32\\cmd.exe ETIMEDOUT"
+      Error Name:: "Error"
+      
+      
+      
+      
+      
+      
+
+      Timestamp:: Fri, 16 Jan 2026 09:43:30 GMT
+      Extension Version:: 2.8.0
+      --------------------------------------
+    
+      --------------------------------------
+      Error Stack:: "Error: spawnSync C:\\WINDOWS\\system32\\cmd.exe ETIMEDOUT\n    at Object.spawnSync (node:internal/child_process:1120:20)\n    at spawnSync (node:child_process:935:24)\n    at c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:239025\n    at new Promise (<anonymous>)\n    at l.spawnSync (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:238972)\n    at a.FdkHelper.runInBackground (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:254528)\n    at a.FdkHelper.runFdkValidate (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:251049)\n    at a.FdkHelper.runWithConfig (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:255278)\n    at a.FdkHelper.checkAndRunFdkValidate (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:250946)\n    at a.FdkHelper.validateAppWithoutLint (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:250355)\n    at v.migrateApp (c:\\Users\\aroki\\.vscode\\extensions\\freshworksmarketplace.freddy-copilot-2.8.0\\dist\\extension.js:2:285560)"
+      Error Message:: "spawnSync C:\\WINDOWS\\system32\\cmd.exe ETIMEDOUT"
+      Error Name:: "Error"
+      
+      
+      
+      
+      
+      
+
+      Timestamp:: Fri, 16 Jan 2026 09:43:50 GMT
+      Extension Version:: 2.8.0
+      --------------------------------------
+    

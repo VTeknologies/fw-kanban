@@ -360,11 +360,11 @@
                   this.getParamsFrmParent();
                 })
                 .catch((error) => {
-                  console.log(error);
+                  console.error(error);
                   const errResp = JSON.parse(error.response);
                   this.showNotify(
                     { message: errResp, title: "Error" },
-                    "error"
+                    "error",
                   );
                 });
             },
@@ -401,12 +401,12 @@
                 if (fieldName === "status") {
                   value = value.toString();
                   const key = Object.keys(field.choices).find(
-                    (key) => key === value
+                    (key) => key === value,
                   );
                   return field.choices[key][0];
                 }
                 return Object.keys(field.choices).find(
-                  (key) => field.choices[key] === value
+                  (key) => field.choices[key] === value,
                 );
               };
 
@@ -455,16 +455,15 @@
                 .then((data) => {
                   if (data.status == 200) {
                     this.ticketData = JSON.parse(data.response);
-                    console.log(this.ticketData);
                     if (
                       this.ticketIparamFields.includes(
-                        "company,Company,default_company"
+                        "company,Company,default_company",
                       )
                     )
                       this.getCompanyName(this.ticketData.company_id);
                     if (
                       this.ticketIparamFields.includes(
-                        "requester,Search a requester,default_requester"
+                        "requester,Search a requester,default_requester",
                       )
                     )
                       this.getRequesterName(this.ticketData.requester_id);
@@ -476,11 +475,11 @@
                 })
                 .catch((error) => {
                   this.closeLoading();
-                  console.log(error);
+                  console.error(error);
                   const errResp = JSON.parse(error.response);
                   this.showNotify(
                     { message: errResp, title: "Error" },
-                    "error"
+                    "error",
                   );
                 });
             },
@@ -492,7 +491,7 @@
                     "getTicketFields",
                     {
                       context: { agentId: this.agentId },
-                    }
+                    },
                   );
                 if (status !== 200) return;
                 this.ticketFields = JSON.parse(response);
@@ -528,10 +527,9 @@
                     "getTicketCompany",
                     {
                       context: { companyId, agentId: this.agentId },
-                    }
+                    },
                   );
                 if (status === 200) {
-                  console.log(JSON.parse(response));
                   this.companyName = JSON.parse(response).name;
                 }
               } catch (error) {
@@ -546,10 +544,9 @@
                     "getTicketRequester",
                     {
                       context: { requesterId, agentId: this.agentId },
-                    }
+                    },
                   );
                 if (status === 200) {
-                  console.log(JSON.parse(response));
                   this.requesterName = JSON.parse(response).name;
                 }
               } catch (error) {
@@ -559,8 +556,6 @@
             getParamsFrmParent() {
               this.fdObjectModal.instance.context().then((context) => {
                 if (context.data) {
-                  console.log(context.data);
-
                   this.ticketId = context.data.ticketId || 0;
                   this.agentName = context.data.agentName;
                   this.status = context.data.status;
@@ -568,8 +563,6 @@
                   this.ticketIparamFields = context.data.iparams.ticket_fields;
                   this.agentId = context.data.loggedInUser;
                   this.iparams = context.data.iparams;
-                  // console.log(this.iparams);
-
                   this.showLoading();
                   this.getTicketDetails();
                   this.getTicketFields();
@@ -593,7 +586,7 @@
 
             getAgentNameFromList(agentId) {
               let agentName = this.agentsList.filter(
-                (elm) => elm.id == agentId
+                (elm) => elm.id == agentId,
               );
               try {
                 return agentName[0].contact.name;
@@ -627,7 +620,7 @@
               }
 
               const fieldObj = this.ticketFields.find(
-                (x) => x.type === type && x.name === name
+                (x) => x.type === type && x.name === name,
               );
 
               if (!fieldObj?.choices) return [];
@@ -653,8 +646,6 @@
             },
 
             async updateFieldValue(field, newValue) {
-              console.log(newValue);
-
               let value = newValue?.value ?? newValue;
               const [name, , type] = field.split(",");
 
@@ -687,10 +678,8 @@
                     ticketId: this.ticketId,
                     body,
                     loggedInUser: this.agentId,
-                  }
+                  },
                 );
-                console.log(response);
-
                 // const { response, status } =
                 //   await this.fdObjectModal.request.invokeTemplate(
                 //     "updateTicket",
@@ -714,7 +703,7 @@
                   };
                   if (type === "default_agent")
                     this.agentName = this.getAgentNameFromList(
-                      ticket.responder_id
+                      ticket.responder_id,
                     );
 
                   this.$forceUpdate();
@@ -723,7 +712,7 @@
                       title: "Success",
                       message: "Ticket updated",
                     },
-                    "success"
+                    "success",
                   );
                 } else {
                   this.showNotify(
@@ -731,7 +720,7 @@
                       title: "Error",
                       message: "Failed to update ticket",
                     },
-                    "error"
+                    "error",
                   );
                 }
               } catch (error) {
@@ -741,7 +730,7 @@
                     title: "Error",
                     message: "Failed to update ticket",
                   },
-                  "error"
+                  "error",
                 );
               }
             },

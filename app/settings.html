@@ -421,14 +421,7 @@
                 .then((data) => {
                   if (data.status == 200) {
                     let response = JSON.parse(data.response);
-                    // this.dpValues = response.filter((value) => {
-                    //   return (
-                    //     value.type !== "nested_field" &&
-                    //     value.type !== "default_source" &&
-                    //     value.type !== "default_product" &&
-                    //     !!value.choices
-                    //   );
-                    // });
+
                     this.dpValues = response.filter((v) => {
                       const count = v.choices
                         ? Array.isArray(v.choices)

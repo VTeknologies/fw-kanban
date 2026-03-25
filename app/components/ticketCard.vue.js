@@ -267,12 +267,11 @@ let TicketCard = Vue.component("TicketCard", {
         this.ticketId,
         this.subject,
         this.agentName,
-        this.status
+        this.status,
       );
     },
     async getAgentName() {
       if (this.agentId !== "" && this.agentId) {
-        console.log(this.agentId);
         try {
           const { response, status } =
             await this.fdObject.request.invokeTemplate("getAgent", {
@@ -289,23 +288,6 @@ let TicketCard = Vue.component("TicketCard", {
           console.error(error);
           this.showNotify("error occured", "danger");
         }
-        // this.fdObject.request
-        //   .invokeTemplate("getAgent", {
-        //     context: {
-        //       agentId: this.agentId,
-        //     },
-        //   })
-        //   .then((data) => {
-        //     if (data.status == 200) {
-        //       this.agentName = JSON.parse(data.response).contact.name;
-        //     } else {
-        //       throw data;
-        //     }
-        //   })
-        //   .catch((error) => {
-        //     console.error(error);
-        //     this.showNotify("error occured", "danger");
-        //   });
       } else {
         this.agentName = "N/A";
       }
@@ -335,17 +317,15 @@ let TicketCard = Vue.component("TicketCard", {
             body,
             ticketId: this.ticketId,
             loggedInUser: this.loggedInUser,
-          }
+          },
         );
-        console.log(response);
 
         const { ticket, error } = response.response;
-        console.log(ticket);
 
         if (!error) {
           this.showNotify(
             { message: "Status updated successfully" },
-            "success"
+            "success",
           );
 
           this.agentId = ticket.responder_id;
@@ -357,7 +337,7 @@ let TicketCard = Vue.component("TicketCard", {
               title: "Error",
               message: "Failed to update ticket",
             },
-            "error"
+            "error",
           );
         }
       } catch (error) {

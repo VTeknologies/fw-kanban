@@ -57,6 +57,7 @@ const handleValidation = async () => {
     iparams.domain = domain;
     iparams.api_key = api_key.trim();
     window.isValid = await getAgents(domain, api_key);
+
     await getTicketFields();
     if (window.isValid) {
       showNotification(
@@ -68,7 +69,6 @@ const handleValidation = async () => {
       $("#spinner").hide();
       iparams["domain"] = domain;
       iparams["api_key"] = api_key;
-      createDDLForAgents();
     }
   } catch (error) {
     console.error(error);
@@ -102,6 +102,7 @@ const validateFdCredentials = async (domain, api_key, isTrue) => {
 };
 
 const getAgents = async (domain, api_key, page = 1) => {
+  if (page === 1) agents = [];
   try {
     const { response, status, headers } = await client.request.invokeTemplate(
       "getAgentsListForSettings",
@@ -116,7 +117,7 @@ const getAgents = async (domain, api_key, page = 1) => {
     agents = [...agents, ...JSON.parse(response)];
     if (status === 200) {
       if (headers.link && agents.length) {
-        await getAgents(domain, api_key, ++page);
+        return await getAgents(domain, api_key, ++page);
       } else return true;
     }
     return false;
@@ -327,6 +328,10 @@ const handleTicketFields = (e) => {
 
 const handleToggleChange = (e) => {
   iparams["enable_api_key_access"] = e.target.checked;
-  if (e.target.checked) $("#wrapper").show();
-  else $("#wrapper").hide();
+  if (e.target.checked) {
+    $("#wrapper").show();
+    if (wrapper.querySelectorAll(".row-enter").length === 0) {
+      createDDLForAgents();
+    }
+  } else $("#wrapper").hide();
 };

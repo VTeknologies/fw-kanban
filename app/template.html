@@ -147,67 +147,6 @@
                     <i class="fas fa-filter"></i>
                   </span>
                 </el-popover>
-                <!-- <el-popover>
-                  <div class="el-popover__title">
-                    Fields
-                    <button
-                      class="btn btn-link pull-right"
-                      style="font-size: 9px; padding: 7px"
-                      title="Clear Group by"
-                      @click="_handleRemoveGroupBy"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-12">
-                      <div style="display: flex; gap: 10px">
-                        <el-select
-                          id="sortBy"
-                          class="width-100"
-                          v-model="sortBy.field"
-                          placeholder="Select Field"
-                          no-match-text="No Items"
-                          no-data-text="No Options"
-                          @change="_handleSortBy"
-                        >
-                          <el-option
-                            v-for="item in getNumberList()"
-                            :key="item.value"
-                            :label="item.label"
-                            :value="item.value"
-                          >
-                          </el-option>
-                        </el-select>
-                        <el-select
-                          id="sortByOrder"
-                          class="width-100"
-                          v-model="sortBy.order"
-                          placeholder="Select Order"
-                          no-match-text="No Items"
-                          no-data-text="No Options"
-                          @change="_handleSortByOrder"
-                        >
-                          <el-option
-                            v-for="item in ['Ascending', 'Descending']"
-                            :key="item"
-                            :label="item"
-                            :value="item"
-                          >
-                          </el-option>
-                        </el-select>
-                      </div>
-                    </div>
-                  </div>
-                  <span
-                    class="btn btn-default"
-                    style="font-size: 11px; padding: 9px; font-weight: bold"
-                    title="Sort"
-                    slot="reference"
-                  >
-                    <i class="el-icon-sort"></i>
-                  </span>
-                </el-popover> -->
 
                 <button
                   class="btn btn-default animate-btn"
@@ -232,12 +171,6 @@
                   </div>
                   <div class="row">
                     <div class="col-md-12">
-                      <!-- <div
-                        v-for="x in dropdownFields"
-                        :key="x.id"
-                        class="form-group"
-                      >
-                        <label for="agentId">{{x.label}}</label> -->
                       <el-select
                         id="agentId"
                         class="width-100"
@@ -303,42 +236,6 @@
                       <i class="fas fa-cog"></i> Configurations
                     </span>
                   </div>
-                  <!-- <div style="margin-left: 5px; margin-right: 5px">
-                    <el-tooltip
-                      class="item"
-                      effect="dark"
-                      content="Previous Page"
-                      placement="bottom"
-                    >
-                      <button
-                        class="btn btn-default btn-page"
-                        @click="_handlepreviousPage"
-                        :disabled="disablePagination || currentPage == 1 "
-                      >
-                        <i
-                          class="el-icon-arrow-left"
-                          style="font-weight: bolder"
-                        ></i>
-                      </button>
-                    </el-tooltip>
-                    <el-tooltip
-                      class="item"
-                      effect="dark"
-                      content="Next page"
-                      placement="bottom"
-                    >
-                      <button
-                        class="btn btn-default btn-page"
-                        @click="_handleNextPage"
-                        :disabled="disablePagination || (hasFilter && currentPage > 10)"
-                      >
-                        <i
-                          class="el-icon-arrow-right"
-                          style="font-weight: bolder"
-                        ></i>
-                      </button>
-                    </el-tooltip>
-                  </div> -->
                 </div>
               </h4>
             </div>
@@ -356,14 +253,7 @@
                       0}})</strong
                     >
                   </h5>
-                  <!-- <div
-                    class="tickets-scroll"
-                    v-infinite-scroll="debouncedLoadMore"
-                    :data-index="index"
-                    :data-value="value.value"
-                    :infinite-scroll-disabled="disableScroll[index]"
-                    infinite-scroll-distance="20"
-                  > -->
+
                   <div
                     class="tickets-scroll"
                     :data-index="index"
@@ -442,7 +332,7 @@
         </div>
       </div>
     </div>
-    <!-- <script src="https://static.freshdev.io/fdk/2.0/assets/fresh_client.js"></script> -->
+
     <script async src="{{{appclient}}}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.5.22/dist/vue.js"></script>

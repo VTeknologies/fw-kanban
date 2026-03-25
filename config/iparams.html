@@ -81,6 +81,9 @@
           <h5>Restrict access using user API keys</h5>
           <fw-toggle class="fw-mt-2" id="toggle" size="small"></fw-toggle>
         </div>
+        <div style="text-align: center">
+          <fw-spinner id="spinner" size="medium"></fw-spinner>
+        </div>
         <div
           id="wrapper"
           style="display: none"
@@ -98,9 +101,6 @@
                 Users without a configured key won’t see the app.
               </p></span
             >
-            <div style="text-align: center">
-              <fw-spinner id="spinner" size="medium"></fw-spinner>
-            </div>
           </div>
         </div>
       </div>
@@ -131,17 +131,20 @@
         } = configs;
         document.getElementsByName("domain")[0].value = domain;
         document.getElementsByName("api_key")[0].value = api_key;
-        document.getElementById("toggle").checked = enable_api_key_access;
         iparams = configs;
+        $("#admin-api-container").hide();
         $("#agent-api-container").show();
 
         await getAgents(domain, api_key);
         await getTicketFields(ticket_fields);
-        agent_ids.forEach((id) => {
-          createDDLForAgents(id);
-        });
+        if (enable_api_key_access) {
+          $("#wrapper").show();
+          agent_ids.forEach((id) => {
+            createDDLForAgents(id);
+          });
+        }
+        document.getElementById("toggle").checked = enable_api_key_access;
         window.isValid = true;
-        if (enable_api_key_access) $("#admin-api-container").hide();
 
         $("#spinner").hide();
       }
@@ -155,7 +158,7 @@
         //write your code here
         return {
           _meta: {
-            secure: ["api_key", "crendentials"],
+            secure: ["api_key", "credentials"],
           },
           ...iparams,
         };

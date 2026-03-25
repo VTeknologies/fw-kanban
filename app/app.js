@@ -5,8 +5,6 @@
       TicketCard,
     },
     data: {
-      // currentPage: 1,
-      // disablePagination: false,
       isDragging: false,
       onlyMyIssues: false,
       recentlyUpdated: false,
@@ -111,47 +109,41 @@
     //   this.debouncedLoadMore = this.debounce(this.loadMoreWrapper, 300);
     // },
     methods: {
-      initFD() {
-        return app
-          .initialized()
-          .then((client) => {
-            this.fdObject = client;
-            this.fdObject.data
-              .get("loggedInUser")
-              .then((data) => {
-                this.$refs.kanbanContainder.classList.remove("hide");
-                this.loggedInUser = data.loggedInUser.id;
-                this.getIparams();
-                if (!this.hasAccess) return;
-                this.getAgentList();
-                this.getDataFromModel();
-                this.getTicketFields();
-              })
-              .catch((error) => {
-                console.log(error);
-                this.showNotify({ message: error.response }, "danger");
-              });
-          })
-          .catch((error) => {
-            console.log(error);
-            this.showNotify({ message: error.response }, "danger");
-          });
+      async initFD() {
+        try {
+          const client = await app.initialized();
+          this.fdObject = client;
+
+          const data = await this.fdObject.data.get("loggedInUser");
+          this.$refs.kanbanContainder.classList.remove("hide");
+          this.loggedInUser = data.loggedInUser.id;
+
+          await this.getIparams();
+          if (!this.hasAccess) return;
+
+          this.getAgentList();
+          this.getDataFromModel();
+          this.getTicketFields();
+        } catch (error) {
+          console.error(error);
+          this.showNotify(
+            { message: error.response || "Failed to initialize app" },
+            "danger",
+          );
+        }
       },
 
-      getIparams() {
-        this.fdObject.iparams
-          .get()
-          .then((data) => {
-            //  console.log(data);
-            this.iparams = data;
-            this.isApiAccessEnabled = data.enable_api_key_access;
-            if (this.isApiAccessEnabled)
-              this.hasAccess = data.agent_ids.includes(this.loggedInUser);
-            else this.hasAccess = true;
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+      async getIparams() {
+        try {
+          const data = await this.fdObject.iparams.get();
+          this.iparams = data;
+          this.isApiAccessEnabled = data.enable_api_key_access;
+          if (this.isApiAccessEnabled)
+            this.hasAccess = data.agent_ids.includes(this.loggedInUser);
+          else this.hasAccess = true;
+        } catch (error) {
+          console.error(error);
+        }
       },
       showLoading(containerId) {
         if (
@@ -195,7 +187,6 @@
           const data = await this.getSelectedTicketFields();
           this.dbData = data.field_data ? { ...data } : { field_data: [data] };
           const { group, field_data, filter } = this.dbData;
-          console.log(Object.keys(filter));
 
           let fieldObj = group
             ? field_data.find((x) => x.selectedTicketField === group)
@@ -319,44 +310,20 @@
               { message: response.response.errors.message },
               "danger",
             );
-            this.closeAllLoading();
+
             return;
           }
+
           this.tickets = [...response.response.allTickets];
           this.ticketBak = [...response.response.allTickets];
-          this.pages = response.response.pages;
-          this.hasMore = response.response.hasMore;
-
-          this.closeAllLoading();
+          this.pages = response.response?.pages;
+          this.hasMore = response.response?.hasMore;
         } catch (error) {
           console.error(error);
+          this.showNotify({ message: "Failed to fetch tickets" }, "danger");
+        } finally {
+          this.closeAllLoading();
         }
-
-        // for (const [index, element] of this.ticketFields.entries()) {
-        //   if (element.showInBoard) {
-        //     this.pages[index] = 1;
-        //     const { tickets, error } = await this.fetchTickets(
-        //       element.value,
-        //       index
-        //     );
-        //     if (!error) {
-        //       this.tickets.push(
-        //         this.getTickets(tickets.results, element.value)
-        //       );
-        //       if (this.tickets[index].length < tickets.total) {
-        //         this.hasMore[index] = true;
-        //         this.pages[index]++;
-        //       } else if (this.tickets[index]?.length === tickets.total)
-        //         this.hasMore[index] = false;
-        //       // this.disableScroll[index] = true;
-        //       this.storeInsessionStorage();
-        //       this.ticketBak = this.tickets;
-        //     }
-        //     this.closeLoading(element.key);
-        //   }
-        //   // this.disablePagination = false;
-        // }
-        // return this.tickets;
       },
       async fetchTickets(value, index) {
         try {
@@ -376,7 +343,6 @@
               value !== "Unassigned" ? (isString ? `'${value}'` : value) : null
             }${defaultFilter}"`,
           );
-          // console.log(filter);
 
           const { response, status, headers } =
             await this.fdObject.request.invokeTemplate("getAllTickets", {
@@ -483,7 +449,6 @@
       getDataFromModel() {
         this.fdObject.instance.receive((event) => {
           const data = event.helper.getData();
-          console.log(data);
 
           if (data.message.fromModel) {
             this.fdObject.interface.trigger("click", {
@@ -512,7 +477,6 @@
             const resp = JSON.parse(response);
             this.agentsList = [...this.agentsList, ...resp];
             // If there's a next page, fetch recursively
-            //  console.log(this.agentsList);
 
             if (headers.link && resp.length) {
               await this.getAgentList(++currentPage);
@@ -527,7 +491,7 @@
             throw data;
           }
         } catch (error) {
-          console.log(error);
+          console.error(error);
           if (error.status === 400 || error.status === 404) {
             this.showNotify(
               { message: "Invalid API Key / Domain Name" },
@@ -569,7 +533,7 @@
             }
           })
           .catch((error) => {
-            console.log(error);
+            console.error(error);
             if (error.status == 400 || error.status == 404) {
               this.showNotify(
                 { message: "Invalid API Key / Domain Name" },
@@ -594,7 +558,7 @@
             }
           })
           .catch((error) => {
-            console.log(error);
+            console.error(error);
             if (error.status == 400 || error.status == 404) {
               this.showNotify(
                 { message: "Invalid API Key / Domain Name" },
@@ -636,7 +600,6 @@
       async loadMore(index, value) {
         try {
           this.$set(this.isLoadingMore, index, true);
-          console.log(this.isLoadingMore);
           const { response } = await this.fdObject.request.invoke(
             "serverMethod",
             {
@@ -650,9 +613,9 @@
               index,
             },
           );
-          console.log(response);
+
           const { tickets, error } = response.response;
-          // const { tickets, error } = await this.fetchTickets(value, index);
+
           if (!error) {
             const current = Array.isArray(this.tickets[index])
               ? this.tickets[index]
@@ -683,11 +646,6 @@
       },
 
       async changeTicketFieldStatus(id, status) {
-        // const url = "<%= iparam.$domain.url %>/api/channel/v2/tickets/" + id;
-        // const headers = {
-        //   Authorization: "Basic <%= encode(iparam.api_key) %>",
-        //   "content-type": "application/json",
-        // };
         let body = {};
         if (this.ticketFieldName.startsWith("cf_")) {
           body["custom_fields"] = {};
@@ -695,10 +653,7 @@
         } else {
           body[this.ticketFieldName] = status;
         }
-        // const options = {
-        //   headers: headers,
-        //   body: JSON.stringify(body),
-        // };
+
         try {
           const { response } = await this.fdObject.request.invoke(
             "serverMethod",
@@ -724,28 +679,6 @@
           console.error(error);
           this.showNotify({ message: error.response }, "danger");
         }
-
-        // this.fdObject.request
-        //   .invokeTemplate("updateTicket", {
-        //     context: { ticketId: id, agentId: this.loggedInUser },
-        //     body: JSON.stringify(body),
-        //   })
-        //   .then((data) => {
-        //     if (data.status == 200) {
-        //       this.showNotify(
-        //         {
-        //           message: "Status updated",
-        //         },
-        //         "success"
-        //       );
-        //     } else {
-        //       throw data;
-        //     }
-        //   })
-        //   .catch((error) => {
-        //     console.log(error);
-        //     this.showNotify({ message: error.response }, "danger");
-        //   });
       },
       getOptions(name) {
         if (name === "agent") {
@@ -770,24 +703,6 @@
             }));
       },
 
-      // _handlepreviousPage() {
-      //   if (this.currentPage > 1) {
-      //     this.currentPage--;
-      //   }
-      //   this.disablePagination = true;
-      //   this.showAllLoading();
-      //   this.getAllTickets();
-      // },
-
-      // _handleNextPage() {
-      //   if (this.currentPage >= 1) {
-      //     this.currentPage++;
-      //   }
-      //   this.disablePagination = true;
-      //   this.showAllLoading();
-      //   this.getAllTickets();
-      // },
-
       _handleRefresh() {
         //  this.currentPage = 1;
         this.showAllLoading();
@@ -803,10 +718,6 @@
           filter: this.filters,
         };
         await this.setData();
-
-        // this.selectedAgents = [];
-        // this.selectedGroups = [];
-        // this.selectedPriority = null;
         this.buildFilters();
       },
       _handleRemoveGroupBy() {
@@ -837,12 +748,10 @@
       async _filterSelectedAgents(value, isTrue) {
         try {
           let tickets = [];
-          console.log(isTrue);
           if (isTrue) {
             this.showAllLoading();
             tickets = await this.getAllTickets();
           } else tickets = this.getSessionStorage();
-          console.log(tickets);
           if (tickets && tickets.length > 0)
             this.filterBySessionData(tickets, isTrue);
           else this.buildFilters();
@@ -858,76 +767,16 @@
       _filterSelectedPriority() {
         this.buildFilters();
       },
-      // _handleSortBy() {
-      //   console.log("Hello");
-      // },
-      // async _handleGroupBy(name) {
-      //   const fieldId = Number(name.split(",")[1]);
-      //   name = name.split(",")[0];
 
-      //   try {
-      //     const existsObj = this.dbData.field_data.find(
-      //       (x) => x.selectedTicketField === name
-      //     );
-
-      //     if (existsObj) {
-      //       this.ticketFields = [
-      //         ...existsObj.selectedChoice.map((elm) => {
-      //           elm.showInBoard = true;
-      //           return elm;
-      //         }),
-      //         ...existsObj.hiddenChoice.map((elm) => {
-      //           elm.showInBoard = false;
-      //           return elm;
-      //         }),
-      //       ];
-
-      //       this.ticketFieldName = name;
-      //       this.dbData.group = name;
-      //       this.showAllLoading();
-      //       await this.setData();
-      //       await this.getAllTickets();
-      //       return;
-      //     }
-      //     const fieldObj = this.dropdownFields.find((x) => x.name === name);
-      //     if (!fieldObj?.choices) return [];
-      //     const choices = fieldObj.choices;
-      //     this.ticketFieldName =
-      //       fieldObj.name === "group" ? "group_id" : fieldObj.name;
-      //     // Convert object or array to dropdown format
-      //     const formatted = Array.isArray(choices)
-      //       ? choices.map((c) => ({ key: c, showInBoard: true, value: c }))
-      //       : Object.keys(choices).map((key) => ({
-      //           key: choices[key][0] || key,
-      //           showInBoard: true,
-      //           value: Array.isArray(choices[key]) ? key : choices[key],
-      //         }));
-      //     this.ticketFields = [...formatted];
-      //     this.dbData.field_data = [
-      //       {
-      //         selectedTicketField: name,
-      //         selectedChoiceId: fieldId,
-      //         selectedChoice: formatted,
-      //         hiddenChoice: [],
-      //       },
-      //       ...this.dbData.field_data,
-      //     ];
-      //     this.dbData.group = name;
-      //     this.showAllLoading();
-      //     await this.setData();
-      //     await this.getAllTickets();
-      //   } catch (error) {
-      //     console.error(error);
-      //   }
-      // },
       async _handleGroupBy(value) {
         try {
           const [name, fieldIdStr] = value.split(",");
           const fieldId = Number(fieldIdStr);
           // Find existing field & move it to top
-          const existingIndex = this.dbData.field_data?.findIndex(
-            (item) => item.selectedTicketField === name,
-          );
+          const existingIndex =
+            this.dbData.field_data?.findIndex(
+              (item) => item.selectedTicketField === name,
+            ) ?? -1;
           let existsObj = null;
           if (existingIndex !== -1) {
             [existsObj] = this.dbData.field_data.splice(existingIndex, 1);
@@ -982,6 +831,7 @@
 
           this.ticketFields = [...formatted];
 
+          if (!this.dbData.field_data) this.dbData.field_data = [];
           this.dbData.field_data.unshift({
             selectedTicketField: name,
             selectedChoiceId: fieldId,
@@ -1035,9 +885,7 @@
         ];
         return list;
       },
-      _handleSortByOrder() {
-        console.log("yes");
-      },
+
       async setData() {
         try {
           await this.fdObject.db.set(`ticket-fields-${this.loggedInUser}`, {
@@ -1059,8 +907,6 @@
       getSessionStorage() {
         try {
           const tickets = sessionStorage.getItem("tickets");
-          console.log(tickets);
-
           if (tickets) return JSON.parse(tickets);
         } catch (error) {
           console.error(error);
@@ -1068,7 +914,6 @@
       },
       buildFilters() {
         const queryParams = this.constructQueryParams();
-
         this.showAllLoading();
         this.dbData.filter = this.filters;
         this.setData();
@@ -1088,7 +933,6 @@
       async filterBySessionData(tickets, isTrue) {
         try {
           this.showAllLoading();
-          console.log(this.filters);
           const updatedTickets = [];
           const filterEntries = Object.entries(this.filters)
             .filter(
@@ -1115,7 +959,6 @@
             });
             updatedTickets.push(filteredTickets);
           });
-          console.log(this.tickets);
 
           const queryParams = this.constructQueryParams();
           this.dbData.filter = this.filters;

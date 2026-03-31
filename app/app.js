@@ -1,9 +1,7 @@
 (function () {
   new Vue({
     el: "#kabanaId",
-    components: {
-      TicketCard,
-    },
+    components: {},
     data: {
       isDragging: false,
       onlyMyIssues: false,
@@ -325,60 +323,60 @@
           this.closeAllLoading();
         }
       },
-      async fetchTickets(value, index) {
-        try {
-          const pageOptions = `&page=${this.pages[index]}`;
-          const renamedField =
-            this.ticketFieldName === "responder_id"
-              ? "agent_id"
-              : this.ticketFieldName;
-          const defaultFilter =
-            this.defaultFilter !== "" ? ` AND ${this.defaultFilter}` : "";
-          // Filter for custom field ad type will be string, so checking and adding the same
-          const isString =
-            this.ticketFieldName.startsWith("cf_") ||
-            this.ticketFieldName === "type";
-          const filter = encodeURI(
-            `query="${renamedField}:${
-              value !== "Unassigned" ? (isString ? `'${value}'` : value) : null
-            }${defaultFilter}"`,
-          );
-
-          const { response, status, headers } =
-            await this.fdObject.request.invokeTemplate("getAllTickets", {
-              context: {
-                filter: filter + pageOptions,
-                agentId: this.loggedInUser,
-              },
-            });
-          if (status === 200) {
-            const tickets = JSON.parse(response);
-            return {
-              tickets,
-              headers,
-              error: false,
-            };
-          }
-        } catch (error) {
-          console.error(error);
-          if (error.status == 400 || error.status == 404) {
-            this.showNotify(
-              { message: "Invalid API Key / Domain Name" },
-              "danger",
-            );
-          } else if (error.status == 429) {
-            this.showNotify(
-              { message: "Too many requests. Please try again later." },
-              "danger",
-            );
-          } else {
-            this.showNotify({ message: error.response }, "danger");
-          }
-          return {
-            error: true,
-          };
-        }
-      },
+      // fetchTickets is never called client-side; all fetching goes through serverMethod
+      // async fetchTickets(value, index) {
+      //   try {
+      //     const pageOptions = `&page=${this.pages[index]}`;
+      //     const renamedField =
+      //       this.ticketFieldName === "responder_id"
+      //         ? "agent_id"
+      //         : this.ticketFieldName;
+      //     const defaultFilter =
+      //       this.defaultFilter !== "" ? ` AND ${this.defaultFilter}` : "";
+      //     // Filter for custom field ad type will be string, so checking and adding the same
+      //     const isString =
+      //       this.ticketFieldName.startsWith("cf_") ||
+      //       this.ticketFieldName === "type";
+      //     const filter = encodeURI(
+      //       `query="${renamedField}:${
+      //         value !== "Unassigned" ? (isString ? `'${value}'` : value) : null
+      //       }${defaultFilter}"`,
+      //     );
+      //     const { response, status, headers } =
+      //       await this.fdObject.request.invokeTemplate("getAllTickets", {
+      //         context: {
+      //           filter: filter + pageOptions,
+      //           agentId: this.loggedInUser,
+      //         },
+      //       });
+      //     if (status === 200) {
+      //       const tickets = JSON.parse(response);
+      //       return {
+      //         tickets,
+      //         headers,
+      //         error: false,
+      //       };
+      //     }
+      //   } catch (error) {
+      //     console.error(error);
+      //     if (error.status == 400 || error.status == 404) {
+      //       this.showNotify(
+      //         { message: "Invalid API Key / Domain Name" },
+      //         "danger",
+      //       );
+      //     } else if (error.status == 429) {
+      //       this.showNotify(
+      //         { message: "Too many requests. Please try again later." },
+      //         "danger",
+      //       );
+      //     } else {
+      //       this.showNotify({ message: error.response }, "danger");
+      //     }
+      //     return {
+      //       error: true,
+      //     };
+      //   }
+      // },
       async getTicketFields() {
         try {
           const { response, status } =
@@ -416,21 +414,21 @@
         return year + "-" + monthIndex + "-" + day;
       },
 
-      getTickets(tickets, value) {
-        const ticketData = tickets.filter((element) => {
-          let ticket = this.ticketFieldName.startsWith("cf_")
-            ? element.custom_fields
-            : element;
-          if (value === "Unassigned") {
-            return ticket[this.ticketFieldName] === null;
-          } else {
-            return ticket[this.ticketFieldName] === Number(value)
-              ? Number(value)
-              : value;
-          }
-        });
-        return ticketData;
-      },
+      // getTickets(tickets, value) {  // unused: duplicate of server.js getTickets, never called client-side
+      //   const ticketData = tickets.filter((element) => {
+      //     let ticket = this.ticketFieldName.startsWith("cf_")
+      //       ? element.custom_fields
+      //       : element;
+      //     if (value === "Unassigned") {
+      //       return ticket[this.ticketFieldName] === null;
+      //     } else {
+      //       return ticket[this.ticketFieldName] === Number(value)
+      //         ? Number(value)
+      //         : value;
+      //     }
+      //   });
+      //   return ticketData;
+      // },
       handleTicketClicked(ticketId, subject, agentName, status) {
         this.fdObject.interface.trigger("showModal", {
           title: `#${ticketId} - ` + subject,
@@ -508,6 +506,8 @@
         try {
           return agentName[0].contact.name;
         } catch (e) {
+          console.error(e);
+
           return " ";
         }
       },
@@ -588,15 +588,15 @@
         });
       },
 
-      debounce(fn, delay = 300) {
-        let timeout;
-        return function (...args) {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => {
-            fn.apply(this, args);
-          }, delay);
-        };
-      },
+      // debounce(fn, delay = 300) {  // unused: mounted() that used this is commented out
+      //   let timeout;
+      //   return function (...args) {
+      //     clearTimeout(timeout);
+      //     timeout = setTimeout(() => {
+      //       fn.apply(this, args);
+      //     }, delay);
+      //   };
+      // },
       async loadMore(index, value) {
         try {
           this.$set(this.isLoadingMore, index, true);
@@ -622,7 +622,7 @@
               : [];
             this.$set(this.tickets, index, [...current, ...tickets.results]);
             if (this.tickets[index].length < tickets.total) {
-              this.hasMore = true;
+              this.hasMore[index] = true;
               this.pages[index]++;
             } else if (this.tickets[index].length === tickets.total)
               this.hasMore[index] = false;
@@ -745,28 +745,21 @@
         this.buildFilters();
       },
 
-      async _filterSelectedAgents(value, isTrue) {
+      _filterSelectedAgents() {
         try {
-          let tickets = [];
-          if (isTrue) {
-            this.showAllLoading();
-            tickets = await this.getAllTickets();
-          } else tickets = this.getSessionStorage();
-          if (tickets && tickets.length > 0)
-            this.filterBySessionData(tickets, isTrue);
-          else this.buildFilters();
+          this.buildFilters();
         } catch (error) {
           console.error(error);
         }
       },
 
-      _filterSelectedGroups() {
-        this.buildFilters();
-      },
+      // _filterSelectedGroups() {  // unused: template uses _filterSelectedAgents for all filter dropdowns
+      //   this.buildFilters();
+      // },
 
-      _filterSelectedPriority() {
-        this.buildFilters();
-      },
+      // _filterSelectedPriority() {  // unused: same as above, never called from template
+      //   this.buildFilters();
+      // },
 
       async _handleGroupBy(value) {
         try {
@@ -864,27 +857,27 @@
             value: `${x.name},${x.id}`,
           }));
       },
-      getNumberList() {
-        let list = [
-          { value: "due_by", label: "Due By" },
-          { value: "created_at", label: "Created At" },
-          { value: "updated_at", label: "Updated At" },
-          { value: "due_by", label: "Due Date" },
-        ];
+      // getNumberList() {  // unused: never called from template or any other method
+      //   let list = [
+      //     { value: "due_by", label: "Due By" },
+      //     { value: "created_at", label: "Created At" },
+      //     { value: "updated_at", label: "Updated At" },
+      //     { value: "due_by", label: "Due Date" },
+      //   ];
 
-        list = [
-          ...list,
-          ...this.allTicketFields
-            .filter(
-              (x) =>
-                x.type === "custom_date" ||
-                x.type === "custom_number" ||
-                x.type === "custom_decimal",
-            )
-            .map((x) => ({ value: x.name, label: x.label })),
-        ];
-        return list;
-      },
+      //   list = [
+      //     ...list,
+      //     ...this.allTicketFields
+      //       .filter(
+      //         (x) =>
+      //           x.type === "custom_date" ||
+      //           x.type === "custom_number" ||
+      //           x.type === "custom_decimal",
+      //       )
+      //       .map((x) => ({ value: x.name, label: x.label })),
+      //   ];
+      //   return list;
+      // },
 
       async setData() {
         try {
@@ -897,21 +890,21 @@
           console.error(error);
         }
       },
-      storeInsessionStorage() {
-        try {
-          sessionStorage.setItem("tickets", JSON.stringify(this.tickets));
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      getSessionStorage() {
-        try {
-          const tickets = sessionStorage.getItem("tickets");
-          if (tickets) return JSON.parse(tickets);
-        } catch (error) {
-          console.error(error);
-        }
-      },
+      // storeInsessionStorage() {  // unused: never called anywhere in the app
+      //   try {
+      //     sessionStorage.setItem("tickets", JSON.stringify(this.tickets));
+      //   } catch (error) {
+      //     console.error(error);
+      //   }
+      // },
+      // getSessionStorage() {  // unused: replaced by ticketBak as the local cache
+      //   try {
+      //     const tickets = sessionStorage.getItem("tickets");
+      //     if (tickets) return JSON.parse(tickets);
+      //   } catch (error) {
+      //     console.error(error);
+      //   }
+      // },
       buildFilters() {
         const queryParams = this.constructQueryParams();
         this.showAllLoading();
@@ -979,13 +972,6 @@
       constructQueryParams() {
         let queryParams = [];
 
-        // Handle special case for "Only My Issues" if it still exists
-        if (this.onlyMyIssues && this.filters.agent_id) {
-          if (!this.filters.agent_id.includes(this.loggedInUser)) {
-            this.filters.agent_id.push(this.loggedInUser);
-          }
-        }
-
         // Special handling for agent_id and group_id (OR relationship between them)
         let agentParams = [];
         let groupParams = [];
@@ -1040,7 +1026,10 @@
           }
         });
 
-        // Handle recently updated if it still exists
+        if (this.onlyMyIssues) {
+          queryParams.push(`agent_id:${this.loggedInUser}`);
+        }
+
         if (this.recentlyUpdated) {
           let date = new Date();
           queryParams.push(`updated_at:'${this.formatDate(date)}'`);

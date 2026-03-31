@@ -1,4 +1,4 @@
-Vue.component("TicketCard", {
+const TicketCard = Vue.component("TicketCard", {
   template: `
     <div :id="currentStatusNumber" @click="_handleClick">
       <el-card :class="['box-card', priorityClass, animateClass]" shadow="hover" :body-style="{ padding: '10px' }" class="animate">
@@ -343,6 +343,28 @@ Vue.component("TicketCard", {
       } catch (error) {
         console.error(error);
       }
+      // this.fdObject.request
+      //   .invokeTemplate("updateTicket", {
+      //     body: JSON.stringify(body),
+      //     context: { ticketId: this.ticketId },
+      //   })
+      //   .then((data) => {
+      //     if (data.status == 200) {
+      //       this.agentId = JSON.parse(data.response).responder_id;
+      //       this.selectedPriority = JSON.parse(data.response).priority;
+      //       this.getAgentName();
+      //       this.showNotify(
+      //         { message: "Status updated successfully" },
+      //         "success"
+      //       );
+      //     } else {
+      //       throw data;
+      //     }
+      //   })
+      //   .catch((error) => {
+      //     console.error(error);
+      //     this.showNotify(JSON.parse(error.response).errors[0], "danger");
+      //   });
     },
 
     showNotify(message, type) {
@@ -354,3 +376,5 @@ Vue.component("TicketCard", {
     },
   },
 });
+
+export default TicketCard;
